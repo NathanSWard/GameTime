@@ -13,14 +13,10 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
       CACHE STRING "")
 endif()
 
-set(wingui WIN32)
-if(MSVC AND CMAKE_CFG_INTDIR STREQUAL "/Debug")
-  set(wingui)
-endif(MSVC AND CMAKE_CFG_INTDIR STREQUAL "/Debug")
-
 set(EXECUTABLE_NAME CNGame)
-add_executable(${EXECUTABLE_NAME} ${wingui} src/main.cpp)
+add_executable(${EXECUTABLE_NAME} src/main.cpp)
 
+# ------------
 # dependencies
 
 # fmt
