@@ -1,0 +1,10 @@
+{
+  "name": "cngame",
+  "version-string": "0.0.1",
+  "dependencies": [
+    "fmt",
+    "spdlog",
+    "entt",
+    "sdl2"
+  ]
+}
