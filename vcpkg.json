@@ -5,6 +5,8 @@
     "fmt",
     "spdlog",
     "entt",
-    "sdl2"
+    "sdl2",
+    "tl-expected",
+    "tl-optional"
   ]
 }
