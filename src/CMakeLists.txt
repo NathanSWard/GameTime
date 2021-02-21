@@ -1,0 +1,30 @@
+set(EXECUTABLE_NAME CNGame)
+add_executable(${EXECUTABLE_NAME} main.cpp)
+
+# ------------
+# dependencies
+
+# fmt
+find_package(fmt CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE fmt::fmt-header-only)
+
+# spdlog
+find_package(spdlog CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE spdlog::spdlog)
+
+# entt
+find_package(entt CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE EnTT::EnTT)
+
+# sdl2
+find_package(SDL2 CONFIG REQUIRED)
+find_package(SDL2-image CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE SDL2::SDL2)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE SDL2::SDL2main)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE SDL2::SDL2_image)
+
+# tl-<expected/optional>
+find_package(tl-expected CONFIG REQUIRED)
+find_package(tl-optional CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE tl::expected)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE tl::optional)

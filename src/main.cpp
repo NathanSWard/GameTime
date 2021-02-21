@@ -1,8 +1,9 @@
 ﻿#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <entt/entt.hpp>
-#include "sdl.hpp"
+#include "sdl/sdl.hpp"
 #include "ecs/system.hpp"
+#include <filesystem>
 
 int main(int, char**)
 {
@@ -30,12 +31,22 @@ int main(int, char**)
 		return EXIT_FAILURE;
 	}
 
+	printf("%s\n", std::filesystem::current_path().string().c_str());
+
+	auto player_texture = sdl::Texture::create(renderer.value(), "../../../../src/assets/rainbow-heart.png");
+	if (!player_texture) {
+		spdlog::error("sdl::Texture::create failed. Error: {}", player_texture.error().msg);
+		return EXIT_FAILURE;
+	}
+
 	entt::registry reg;
 	auto const e = reg.create();
 	reg.emplace<Position>(e, 100.f, 100.f);
 	reg.emplace<Velocity>(e);
-	reg.emplace<Speed>(e, 50.f);
+	reg.emplace<Speed>(e, 150.f);
 	reg.emplace<Player>(e);
+	reg.emplace<Sprite>(e, std::move(player_texture).value());
+	reg.emplace<Size>(e, 100.f, 100.f);
 
 	bool quit = false;
 
@@ -63,7 +74,7 @@ int main(int, char**)
 		SDL_RenderClear(renderer->raw());
 
 		SDL_SetRenderDrawColor(renderer->raw(), 0, 0, 255, 1);
-		
+
 		PlayerControl(reg);
 		Physics(dt.count(), reg);
 		Draw(renderer->raw(), reg);

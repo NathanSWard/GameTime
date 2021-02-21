@@ -8,6 +8,7 @@
     "sdl2",
     "sdl2-image",
     "tl-expected",
-    "tl-optional"
+    "tl-optional",
+    "catch2"
   ]
 }

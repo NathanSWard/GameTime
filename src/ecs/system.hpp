@@ -13,16 +13,16 @@ void Physics(float dt, entt::registry& reg) {
 }
 
 void Draw(SDL_Renderer* renderer, entt::registry& reg) {
-	auto view = reg.view<Position const>();
-	view.each([renderer](Position const& p) {
+	auto view = reg.view<Position const, Size const, Sprite>();
+	view.each([renderer](Position const& p, Size const& s, Sprite& sprite) {
 		auto rect = SDL_FRect{
 			.x = p.x,
 			.y = p.y,
-			.w = 30.f,
-			.h = 30.f,
+			.w = s.w,
+			.h = s.h,
 		};
 
-		SDL_RenderDrawRectF(renderer, &rect);
+		SDL_RenderCopyF(renderer, sprite.texture.raw(), nullptr, &rect);
 		});
 
 }
