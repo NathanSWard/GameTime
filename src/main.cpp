@@ -1,7 +1,7 @@
 ﻿#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <entt/entt.hpp>
-#include "sdl.hpp"
+#include "sdl/sdl.hpp"
 
 int main(int, char**)
 {
