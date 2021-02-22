@@ -2,11 +2,11 @@
   "name": "cngame",
   "version-string": "0.0.1",
   "dependencies": [
-    "fmt",
-    "spdlog",
     "entt",
+    "fmt",
     "sdl2",
     "sdl2-image",
+    "spdlog",
     "tl-expected",
     "tl-optional"
   ]
