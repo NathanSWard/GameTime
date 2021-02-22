@@ -13,16 +13,27 @@ void Physics(float dt, entt::registry& reg) {
 }
 
 void Draw(SDL_Renderer* renderer, entt::registry& reg) {
-	auto view = reg.view<Position const, Size const, Sprite>();
-	view.each([renderer](Position const& p, Size const& s, Sprite& sprite) {
-		auto rect = SDL_FRect{
-			.x = p.x,
-			.y = p.y,
-			.w = s.w,
-			.h = s.h,
+	auto view = reg.view<Position const, Size const, Sprite, TextureAtlas const, AnimationState>();
+	view.each([renderer](Position const& p, Size const& s, Sprite& sprite, TextureAtlas const& atlas, AnimationState& a_state) {
+		auto rect = SDL_Rect{
+			.x = (int)p.x,
+			.y = (int)p.y,
+			.w = (int)s.w,
+			.h = (int)s.h,
 		};
 
-		SDL_RenderCopyF(renderer, sprite.texture.raw(), nullptr, &rect);
+		auto const& currentClip = atlas.textures[a_state.sprite_index];
+
+		SDL_RenderCopy(renderer, sprite.texture.raw(), &currentClip, &rect);
+
+		++a_state.sprite_index;
+
+		if (a_state.sprite_index >= a_state.total_sprites) {
+			a_state.sprite_index = 0;
+		}
+
+		fmt::print("{}\n", a_state.sprite_index);
+		
 		});
 
 }
