@@ -1,5 +1,5 @@
-#include "../ut/ut.hpp"
-#include "core/resource.hpp"
+#include "ut.hpp"
+#include "core/ecs/resource.hpp"
 
 using namespace boost::ut;
 

@@ -1,4 +1,4 @@
-#include "../ut/ut.hpp"
+#include "ut.hpp"
 #include "util/rng.hpp"
 
 #include <cmath>

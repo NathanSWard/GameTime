@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <tl/optional.hpp>
-#include "type_map.hpp"
+#include "util/type_map.hpp"
 
 template <typename T>
 struct Resource 

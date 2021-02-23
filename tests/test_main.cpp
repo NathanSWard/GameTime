@@ -3,6 +3,6 @@
 
 int main()
 {
-    test_core();
+    core_test();
     util_test();
 }

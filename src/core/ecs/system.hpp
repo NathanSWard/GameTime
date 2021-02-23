@@ -1,7 +1,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include "meta.hpp"
+#include "util/meta.hpp"
 #include "resource.hpp"
 #include "world.hpp"
 

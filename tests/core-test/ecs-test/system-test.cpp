@@ -1,7 +1,7 @@
-#include "../ut/ut.hpp"
-#include "core/system.hpp"
-#include "core/system_scheduler.hpp"
-#include "core/resource.hpp"
+#include "ut.hpp"
+#include "core/ecs/system.hpp"
+#include "core/ecs/system_scheduler.hpp"
+#include "core/ecs/resource.hpp"
 
 using namespace boost::ut;
 
