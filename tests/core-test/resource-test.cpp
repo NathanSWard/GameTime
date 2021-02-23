@@ -45,8 +45,8 @@ void resource_test()
         };
     };
 
-    "[ResourceManager]"_test = [] {
-        ResourceManager rm;
+    "[Resources]"_test = [] {
+        Resources rm;
         
         should("add resource") = [&rm] {
             rm.add_resource<int>(42);

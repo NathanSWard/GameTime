@@ -58,7 +58,7 @@ constexpr auto make_const_resource(T const& value) -> Resource<T const>
     return Resource(value);
 }
 
-class ResourceManager
+class Resources
 {
     TypeMap m_resources;
 
