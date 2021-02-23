@@ -2,5 +2,5 @@
 
 int main()
 {
-    type_map_test();
+    test_core();
 }
