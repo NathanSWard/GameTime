@@ -3,6 +3,7 @@
 #include <memory>
 #include <tl/optional.hpp>
 #include "util/type_map.hpp"
+#include "util/common.hpp"
 
 template <typename T>
 struct Resource 
@@ -67,7 +68,7 @@ public:
     template <typename T, typename... Args>
     auto add_resource(Args&&... args) -> Resource<T>
     {
-        T& resource = m_resources.insert<T>(std::forward<Args>(args)...);
+        T& resource = m_resources.insert<T>(FWD(args)...);
         return Resource(resource);
     }
 

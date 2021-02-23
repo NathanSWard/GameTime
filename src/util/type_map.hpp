@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util/common.hpp"
 #include <entt/core/type_info.hpp>
 #include <tl/optional.hpp>
 #include <type_traits>
@@ -96,8 +97,8 @@ public:
     template <typename T, typename... Args>
     auto insert(Args&&... args) -> T&
     {
-        auto const [iter, ok] = m_map.insert_or_assign(entt::type_id<T>().hash(), internal::void_ptr::template create<T>(std::forward<Args>(args)...));
-        static_cast<void>(ok);
+        auto const [iter, ok] = m_map.insert_or_assign(entt::type_id<T>().hash(), internal::void_ptr::template create<T>(FWD(args)...));
+        UNUSED(ok);
         return *static_cast<T*>(iter->second.data());
     }
 

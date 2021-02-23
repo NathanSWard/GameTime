@@ -2,6 +2,7 @@
 
 #include <entt/entt.hpp>
 #include "util/meta.hpp"
+#include "util/common.hpp"
 #include "resource.hpp"
 #include "world.hpp"
 
@@ -24,13 +25,15 @@ class Query<With<Ws...>, Without<WOs...>, View>
     base_t m_repr;
 
 public:
-    constexpr Query(base_t const repr) noexcept : m_repr(repr) {}
+    template <typename T>
+    requires (!std::is_same_v<std::remove_cvref_t<T>, Query>)
+    constexpr Query(T&& repr) noexcept : m_repr(FWD(repr)) {}
 
     auto begin() { return m_repr.begin(); }
     auto end() { return m_repr.end(); }
 
     template <typename F>
-    void each(F&& f) { m_repr.each(std::forward<F>(f)); }
+    void each(F&& f) { m_repr.each(FWD(f)); }
 };
 
 template <typename... Ws, typename... WOs>
@@ -40,13 +43,15 @@ class Query<With<Ws...>, Without<WOs...>, Group>
     base_t m_repr;
 
 public:
-    constexpr Query(base_t const repr) noexcept : m_repr(repr) {}
+    template <typename T>
+    requires (!std::is_same_v<std::remove_cvref_t<T>, Query>)
+    constexpr Query(T&& repr) noexcept : m_repr(FWD(repr)) {}
 
     auto begin() { return m_repr.begin(); }
     auto end() { return m_repr.end(); }
 
     template <typename F>
-    void each(F&& f) { m_repr.each(std::forward<F>(f)); }
+    void each(F&& f) { m_repr.each(FWD(f)); }
 };
 
 namespace internal {
@@ -66,14 +71,14 @@ namespace internal {
     requires (!is_optional_v<T>)
     constexpr auto unwrap_optional(T&& t) -> decltype(auto)
     {
-        return std::forward<T>(t);
+        return FWD(t);
     }
 
     template <typename O>
     requires (is_optional_v<O>)
     constexpr auto unwrap_optional(O&& opt)
     {
-        return *std::forward<O>(opt);
+        return *FWD(opt);
     }
 
     // if a value is an optional check `has_value()`, else return true
@@ -162,9 +167,7 @@ namespace internal {
         }, args);
 
         if (has_all_resouces) {
-            std::apply([func](auto&&... xs) {
-                (*func)(unwrap_optional(std::forward<decltype(xs)>(xs))...);
-            }, std::move(args));
+            std::apply([func](auto&&... xs) { (*func)(unwrap_optional(FWD(xs))...); }, MOV(args));
         }
     }
 
