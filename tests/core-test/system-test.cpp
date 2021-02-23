@@ -122,4 +122,29 @@ void system_test()
             expect(execute::global_count == 0);
         };
     };
+
+    "[System Scheduler: Validate Resources]"_test = [] {
+        auto r = Resources{};
+        r.add_resource<int>(0);
+        auto w = World{};
+        auto scheduler = Scheduler{};
+
+        auto res = r.get_resource<int const>();
+        auto increment_resource = [](Resource<int> res) {
+            ++(*res);
+        };
+
+        should("add system") = [&] {
+            scheduler.add_system(increment_resource);
+            scheduler.run_systems(r, w);
+            expect(**res == 1);
+        };
+
+        should("add additional systems") = [&] {
+            scheduler.add_system(increment_resource);
+            scheduler.add_system(increment_resource);
+            scheduler.run_systems(r, w);
+            expect(**res == 4);
+        };
+    };
 }

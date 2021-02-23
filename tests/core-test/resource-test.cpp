@@ -54,9 +54,11 @@ void resource_test()
 
             auto res = rm.get_resource<int>();
             auto cres = std::as_const(rm).get_resource<int>();
+            auto cres2 = rm.get_resource<int const>();
 
             static_assert(std::is_same_v<std::remove_cvref_t<decltype(*res)>, Resource<int>>);
             static_assert(std::is_same_v<std::remove_cvref_t<decltype(*cres)>, Resource<int const>>);
+            static_assert(std::is_same_v<std::remove_cvref_t<decltype(*cres2)>, Resource<int const>>);
 
             expect((res.has_value() && cres.has_value()) >> fatal);
             expect(std::addressof(**res) == std::addressof(**cres));
