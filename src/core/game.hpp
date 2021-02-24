@@ -1,6 +1,6 @@
 #pragma once
 
-#include <debug/debug.hpp>
+#include "debug/debug.hpp"
 #include "ecs/resource.hpp"
 #include "ecs/world.hpp"
 #include "ecs/system_scheduler.hpp"
