@@ -13,6 +13,8 @@ namespace funcs {
     void multiple_queries(Query<With<int>>, Query<With<char>>) {}
     void multiple_resources(Resource<int>, Resource<char>) {}
     void multiple_queries_and_resources(Resource<int>, Resource<char>, Query<With<int>>, Query<With<char>>) {}
+    void commands(Commands) {}
+    void comands_and_other(Commands, Query<With<int>>, Resource<char>) {}
 }
 
 namespace execute {
@@ -33,6 +35,8 @@ void system_test()
         auto system5 = System::create(funcs::multiple_queries);
         auto system6 = System::create(funcs::multiple_resources);
         auto system7 = System::create(funcs::multiple_queries_and_resources);
+        auto system8 = System::create(funcs::commands);
+        auto system9 = System::create(funcs::comands_and_other);
     };
 
     "[Create Systems: Lambda]"_test = [] {
@@ -146,5 +150,28 @@ void system_test()
             scheduler.run_systems(r, w);
             expect(**res == 4);
         };
+    };
+
+    "[Commands]"_test = [] {
+        auto r = Resources{};
+        auto w = World{};
+        auto scheduler = Scheduler{};
+    
+        auto add_entity_and_resource = [](Commands cmds) {
+            auto e = cmds.spawn();
+            cmds.add_component<int>(e, 42);
+            cmds.add_resource<int>(42);
+        };
+
+        auto system = scheduler.add_system(add_entity_and_resource);
+        scheduler.run_systems(r, w);
+
+        expect(w.size() == 1);
+        expect(w.view<int>().size() == 1);
+        w.view<int>().each([](int const i) { expect(i == 42); });
+
+        auto const res = r.get_resource<int const>();
+        expect((res.has_value()) >> fatal);
+        expect(**res == 42);
     };
 }

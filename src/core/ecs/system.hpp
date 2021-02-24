@@ -1,58 +1,12 @@
 #pragma once
 
 #include <entt/entt.hpp>
+#include "commands.hpp"
 #include "util/meta.hpp"
 #include "util/common.hpp"
+#include "query.hpp"
 #include "resource.hpp"
 #include "world.hpp"
-
-template <typename... Cs>
-struct With {};
-
-template <typename... Cs>
-struct Without {};
-
-struct View {};
-struct Group {};
-
-template <typename W, typename WO = Without<>, typename VG = View>
-struct Query;
-
-template <typename... Ws, typename... WOs>
-class Query<With<Ws...>, Without<WOs...>, View>
-{
-    using base_t = entt::view<entt::exclude_t<WOs...>, Ws...>;
-    base_t m_repr;
-
-public:
-    template <typename T>
-    requires (!std::is_same_v<std::remove_cvref_t<T>, Query>)
-    constexpr Query(T&& repr) noexcept : m_repr(FWD(repr)) {}
-
-    auto begin() { return m_repr.begin(); }
-    auto end() { return m_repr.end(); }
-
-    template <typename F>
-    void each(F&& f) { m_repr.each(FWD(f)); }
-};
-
-template <typename... Ws, typename... WOs>
-class Query<With<Ws...>, Without<WOs...>, Group>
-{
-    using base_t = entt::group<entt::exclude_t<WOs...>, entt::get_t<>, Ws...>;
-    base_t m_repr;
-
-public:
-    template <typename T>
-    requires (!std::is_same_v<std::remove_cvref_t<T>, Query>)
-    constexpr Query(T&& repr) noexcept : m_repr(FWD(repr)) {}
-
-    auto begin() { return m_repr.begin(); }
-    auto end() { return m_repr.end(); }
-
-    template <typename F>
-    void each(F&& f) { m_repr.each(FWD(f)); }
-};
 
 namespace internal {
 
@@ -98,22 +52,17 @@ namespace internal {
 
     // checks a type to ensure its a valid system argument
     template <typename T>
-    struct valid_system_arg
-    {
-        static constexpr bool value = false;
-    };
+    struct valid_system_arg : std::false_type {};
 
     template <typename... Qs>
-    struct valid_system_arg<Query<Qs...>>
-    {
-        static constexpr bool value = true;
-    };
+    struct valid_system_arg<Query<Qs...>> : std::true_type {};
 
     template <typename R>
-    struct valid_system_arg<Resource<R>>
-    {
-        static constexpr bool value = true;
-    };
+    struct valid_system_arg<Resource<R>> : std::true_type {};
+
+    template <>
+    struct valid_system_arg<Commands> : std::true_type {};
+    
 
     // Depending on the argument type, returns the correct value from either the `Resources` or the `World`
     template <typename Arg>
@@ -143,6 +92,15 @@ namespace internal {
         auto operator()(Resources& res, World&) -> decltype(auto)
         {
             return res.get_resource<R>();
+        }
+    };
+
+    template <>
+    struct get_system_arg_impl<Commands>
+    {
+        constexpr auto operator()(Resources& res, World& w) -> Commands
+        {
+            return Commands{ res, w };
         }
     };
 
