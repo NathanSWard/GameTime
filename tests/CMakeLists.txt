@@ -1,6 +1,16 @@
 set(TEXT_EXE tests_run)
 
-set(TEST_SOURCES "util-test/type_map-test.cpp" "core-test/ecs-test/resource-test.cpp" "core-test/ecs-test/system-test.cpp" "util-test/meta-test.cpp" "util-test/rng-test.cpp" "core-test/game-test.cpp")
+set(TEST_SOURCES 
+	"util-test/type_map-test.cpp" 
+	"core-test/ecs-test/resource-test.cpp" 
+	"core-test/ecs-test/system-test.cpp" 
+	"util-test/meta-test.cpp" 
+	"util-test/rng-test.cpp" 
+	"core-test/game-test.cpp" 
+	"util-test/common-test.cpp" 
+	"core-test/assets-test/assets-test.cpp"
+	)
+
 add_executable(${TEXT_EXE} test_main.cpp ${TEST_SOURCES})
 
 include_directories(ut)
