@@ -72,5 +72,59 @@ void resource_test()
             expect(!rm.contains_resource<int>());
             expect(!rm.get_resource<int>().has_value());
         };
+
+        constexpr system_id_t id1 = 1;
+        constexpr system_id_t id2 = 2;
+
+        should("not conatins local resources") = [&] {
+            expect(!rm.local().contains_local_resource<int>(id1));
+            expect(rm.local().remove_local_resource<int>(id1) == nullptr);
+        };
+
+        should("add local resources") = [&rm] {
+            rm.local().add_local_resource<int>(id1, 42);
+            rm.local().add_local_resource<char>(id2, 'a');
+
+            should("contains appropriate local resources") = [&] {
+                expect(rm.local().contains_local_resource<int>(id1));
+                expect(rm.local().contains_local_resource<char>(id2));
+
+                expect(!rm.local().contains_local_resource<char>(id1));
+                expect(!rm.local().contains_local_resource<int>(id2));
+            };
+
+            should("id1") = [&] {
+                auto res = rm.local().get_local_resource<int>(id1);
+                auto cres = std::as_const(rm).local().get_local_resource<int>(id1);
+                auto cres2 = rm.local().get_local_resource<int const>(id1);
+
+                static_assert(std::is_same_v<std::remove_cvref_t<decltype(*res)>, Local<int>>);
+                static_assert(std::is_same_v<std::remove_cvref_t<decltype(*cres)>, Local<int const>>);
+                static_assert(std::is_same_v<std::remove_cvref_t<decltype(*cres2)>, Local<int const>>);
+
+                expect((res.has_value() && cres.has_value()) >> fatal);
+                expect(std::addressof(**res) == std::addressof(**cres));
+            };
+
+            should("id2") = [&] {
+                auto res = rm.local().get_local_resource<char>(id2);
+                auto cres = std::as_const(rm).local().get_local_resource<char>(id2);
+                auto cres2 = rm.local().get_local_resource<char const>(id2);
+
+                expect((res.has_value() && cres.has_value()) >> fatal);
+                expect(std::addressof(**res) == std::addressof(**cres));
+            };
+        };
+
+        should("remove local resources") = [&rm] {
+            expect(rm.local().remove_local_resource<int>(id1) != nullptr);
+            expect(!rm.local().contains_local_resource<int>(id1));
+            expect(!rm.local().get_local_resource<int>(id1).has_value());
+
+            expect(rm.local().remove_local_resource<char>(id2) != nullptr);
+            expect(!rm.local().contains_local_resource<char>(id2));
+            expect(!rm.local().get_local_resource<char>(id2).has_value());
+
+        };
     };
 }

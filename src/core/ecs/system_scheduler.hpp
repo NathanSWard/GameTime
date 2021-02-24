@@ -14,18 +14,12 @@
 //       Allow for systems to run before others.
 class Scheduler
 {
-public:
-    using system_id_t = std::size_t;
-
-private:
     std::unordered_map<system_id_t, System> m_systems;
 
 public:
     template <typename F>
     auto add_system(F&& func) -> system_id_t
     {
-        auto system = System::create(std::forward<F>(func));
-        
         auto const id = [this] {
             for (;;) {
                 auto const id = util::uniform_rand<system_id_t>();
@@ -34,6 +28,8 @@ public:
                 }
             }
         }();
+
+        auto system = System::create(FWD(func), id);
 
         auto const [iter, inserted] = m_systems.try_emplace(id, system);
         DEBUG_ASSERT(inserted);

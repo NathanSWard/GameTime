@@ -15,6 +15,8 @@ namespace funcs {
     void multiple_queries_and_resources(Resource<int>, Resource<char>, Query<With<int>>, Query<With<char>>) {}
     void commands(Commands) {}
     void comands_and_other(Commands, Query<With<int>>, Resource<char>) {}
+    void local(Local<int>) {}
+    void local_and_other(Local<int>, Commands, Query<With<int>>, Resource<char>) {}
 }
 
 namespace execute {
@@ -28,20 +30,45 @@ namespace execute {
 void system_test()
 {
     "[Create Systems: Free Function]"_test = [] {
-        auto system1 = System::create(funcs::only_query);
-        auto system2 = System::create(funcs::only_resource);
-        auto system3 = System::create(funcs::query_and_resources);
-        auto system4 = System::create(funcs::query_group);
-        auto system5 = System::create(funcs::multiple_queries);
-        auto system6 = System::create(funcs::multiple_resources);
-        auto system7 = System::create(funcs::multiple_queries_and_resources);
-        auto system8 = System::create(funcs::commands);
-        auto system9 = System::create(funcs::comands_and_other);
+        auto system1 = System::create(funcs::only_query, system_id_t{ 1 });
+        auto system2 = System::create(funcs::only_resource, system_id_t{ 2 });
+        auto system3 = System::create(funcs::query_and_resources, system_id_t{ 3 });
+        auto system4 = System::create(funcs::query_group, system_id_t{ 4 });
+        auto system5 = System::create(funcs::multiple_queries, system_id_t{ 5 });
+        auto system6 = System::create(funcs::multiple_resources, system_id_t{ 6 });
+        auto system7 = System::create(funcs::multiple_queries_and_resources, system_id_t{ 7 });
+        auto system8 = System::create(funcs::commands, system_id_t{ 8 });
+        auto system9 = System::create(funcs::comands_and_other, system_id_t{ 9 });
+        auto system10 = System::create(funcs::local, system_id_t{ 10 });
+        auto system11 = System::create(funcs::local_and_other, system_id_t{ 11 });
     };
 
     "[Create Systems: Lambda]"_test = [] {
         auto func = [](Query<With<int>>, Resource<char>) {};
-        auto system = System::create(func);
+        auto system = System::create(func, system_id_t{ 1 });
+    };
+
+    "[Execute System: Local Resource]"_test = [] {
+        auto r = Resources{};
+        auto w = World{};
+
+        auto increment_local = [](Local<int> l) { ++(*l); };
+        auto system1 = System::create(increment_local, system_id_t{ 1 });
+        auto system2 = System::create(increment_local, system_id_t{ 2 });
+
+        auto const local1 = r.local().add_local_resource<int>(system_id_t{ 1 }, 0);
+        auto const local2 = r.local().add_local_resource<int>(system_id_t{ 2 }, 99);
+
+        expect(*local1 == 0);
+        expect(*local2 == 99);
+
+        system1.run(r, w);
+        system2.run(r, w);
+
+        should("not affect other systems's locals") = [&] {
+            expect(*local1 == 1);
+            expect(*local2 == 100);
+        };
     };
 
     "[Execute System]"_test = [] {
@@ -50,9 +77,9 @@ void system_test()
 
         auto w = World{};
 
-        auto system1 = System::create(execute::only_query);
-        auto system2 = System::create(execute::only_resource);
-        auto system3 = System::create(execute::query_resource);
+        auto system1 = System::create(execute::only_query, system_id_t{ 1 });
+        auto system2 = System::create(execute::only_resource, system_id_t{ 2 });
+        auto system3 = System::create(execute::query_resource, system_id_t{ 3 });
 
         should("execute system with only query") = [&] {
             execute::global_count = 0;

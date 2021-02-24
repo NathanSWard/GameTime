@@ -94,6 +94,11 @@ public:
         return m_map.empty();
     }
 
+    void clear() noexcept
+    {
+        m_map.clear();
+    }
+
     template <typename T, typename... Args>
     auto insert(Args&&... args) -> T&
     {
