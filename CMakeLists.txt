@@ -13,6 +13,6 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
       CACHE STRING "")
 endif()
 
-add_subdirectory(src)
 include_directories(src)
+add_subdirectory(src)
 add_subdirectory(tests)
