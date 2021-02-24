@@ -116,4 +116,44 @@ namespace sdl {
 
         ~Renderer() noexcept { if (m_renderer) SDL_DestroyRenderer(m_renderer); }
     };
+
+    class Texture {
+        SDL_Texture* m_texture = nullptr;
+
+        constexpr Texture(SDL_Texture* const texture) noexcept
+            : m_texture(texture)
+        {}
+
+    public:
+        Texture(Texture const&) = delete;
+        constexpr Texture(Texture&& other) noexcept : m_texture(std::exchange(other.m_texture, nullptr)) {}
+
+        Texture& operator=(Texture&& other) noexcept {
+            if (m_texture) {
+                SDL_DestroyTexture(m_texture);
+            }
+            m_texture = std::exchange(other.m_texture, nullptr);
+            return *this;
+        }
+
+        static auto create(Renderer& rend, char const* const path) -> tl::expected<Texture, Error> {
+            auto const surface = IMG_Load(path);
+            if (surface == nullptr) {
+                return tl::make_unexpected(Error::current());
+            }
+
+            auto const texture = SDL_CreateTextureFromSurface(rend.raw(), surface);
+            SDL_FreeSurface(surface);
+            if (texture == nullptr) {
+                return tl::make_unexpected(Error::current());
+            }
+
+            return Texture(texture);
+        }
+
+        constexpr auto raw() noexcept -> SDL_Texture* { return m_texture; }
+        constexpr auto raw() const noexcept -> SDL_Texture const* { return m_texture; }
+
+        ~Texture() noexcept { if (m_texture) SDL_DestroyTexture(m_texture); }
+    };
 }
