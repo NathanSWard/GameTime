@@ -101,4 +101,14 @@ public:
     {
         return get_resource<T>();
     }
+
+    auto size() const noexcept -> std::size_t
+    {
+        return m_resources.size();
+    }
+
+    auto empty() const noexcept -> bool
+    {
+        return m_resources.empty();
+    }
 };
