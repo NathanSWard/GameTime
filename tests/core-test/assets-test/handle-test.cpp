@@ -16,8 +16,8 @@ void handle_test()
         auto untyped_int_handle = int_handle.untyped();
         auto untyped_char_handle = char_handle.untyped();
 
-        expect(int_handle.id() == untyped_int_handle.id());
-        expect(char_handle.id() == untyped_char_handle.id());
+        expect(int_handle == untyped_int_handle);
+        expect(char_handle == untyped_char_handle);
 
         expect(untyped_int_handle.typed<int>().has_value());
         expect(!untyped_int_handle.typed<char>().has_value());

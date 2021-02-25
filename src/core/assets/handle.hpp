@@ -1,40 +1,32 @@
 #pragma once
 
-#include <entt/entt.hpp>
+#include <compare>
 #include <functional>
-#include <util/rng.hpp>
+#include <util/common.hpp>
+#include <util/uuid.hpp>
 #include <tl/optional.hpp>
 
 class HandleId 
 {
-    entt::id_type m_type_id;
-    std::uint64_t m_id;
+    Uuid m_uuid;
 
 public:
-    constexpr HandleId(entt::id_type const type_id, std::uint64_t const id) noexcept
-        : m_type_id(type_id)
-        , m_id(id)
+    constexpr HandleId(Uuid const uuid) noexcept
+        : m_uuid(uuid)
+    {}
+
+    [[nodiscard]] constexpr auto uuid() const noexcept -> Uuid
     {
+        return m_uuid;
     }
 
     template <typename T>
-    [[nodiscard]] static auto random() -> HandleId
+    [[nodiscard]] static auto create() -> HandleId
     {
-        return HandleId{ entt::type_id<T>().hash(), util::uniform_rand<std::uint64_t>() };
+        return HandleId{ Uuid::create() };
     }
 
-    [[nodiscard]] constexpr auto id() const noexcept -> std::uint64_t { return m_id; }
-    [[nodiscard]] constexpr auto type_id() const noexcept { return m_type_id; }
-
-    constexpr auto operator==(HandleId const& rhs) const noexcept -> bool
-    {
-        return m_type_id == rhs.m_type_id && m_id == rhs.m_id;
-    }
-
-    constexpr auto operator!=(HandleId const& rhs) const noexcept -> bool
-    {
-        return !(*this == rhs);
-    }
+    constexpr auto operator<=>(HandleId const&) const noexcept = default;
 };
 
 template <>
@@ -42,7 +34,7 @@ struct std::hash<HandleId>
 {
     auto operator()(HandleId const& id) const noexcept -> std::size_t
     {
-        return id.id();
+        return std::hash<Uuid>{}(id.uuid());
     }
 };
 
@@ -60,19 +52,19 @@ class Handle
     friend class UntypedHandle;
 
 public:
-    [[nodiscard]] constexpr auto id() const noexcept -> HandleId
-    {
-        return m_id;
-    }
-
+    [[nodiscard]] auto id() const noexcept -> HandleId { return m_id; }
     [[nodiscard]] constexpr auto untyped() const noexcept -> UntypedHandle;
 };
 
 class UntypedHandle
 {
     HandleId m_id;
+    type_id_t m_type_id;
 
-    constexpr UntypedHandle(HandleId id) noexcept : m_id(id) {}
+    constexpr UntypedHandle(HandleId id, type_id_t const type_id) noexcept 
+        : m_id(id)
+        , m_type_id(type_id)
+    {}
 
     template <typename U>
     friend class Assets;
@@ -80,15 +72,19 @@ class UntypedHandle
     friend class Handle;
 
 public:
-    [[nodiscard]] constexpr auto id() const noexcept -> HandleId
+    [[nodiscard]] auto id() const noexcept -> HandleId { return m_id; }
+    [[nodiscard]] auto type() const noexcept -> type_id_t { return m_type_id; }
+
+    template <typename T>
+    [[nodiscard]] auto is_handle() const noexcept -> bool
     {
-        return m_id;
+        return m_type_id == type_id<T>();
     }
 
     template <typename T>
     [[nodiscard]] constexpr auto typed() const noexcept -> tl::optional<Handle<T>>
     {
-        if (id().type_id() != entt::type_id<T>().hash()) {
+        if (m_type_id != type_id<T>()) {
             return {};
         }
         return Handle<T>{ id() };
@@ -98,5 +94,17 @@ public:
 template <typename T>
 constexpr auto Handle<T>::untyped() const noexcept -> UntypedHandle
 {
-    return UntypedHandle{ id() };
+    return UntypedHandle{ m_id, type_id<T>() };
+}
+
+template <typename T>
+constexpr auto operator==(Handle<T> const& handle, UntypedHandle const uhandle) noexcept -> bool
+{
+    return uhandle.type() == type_id<T>() && uhandle.id() == handle.id();
+}
+
+template <typename T>
+constexpr auto operator==(UntypedHandle const uhandle, Handle<T> const& handle) noexcept -> bool
+{
+    return handle == uhandle;
 }

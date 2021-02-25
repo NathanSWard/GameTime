@@ -23,15 +23,7 @@ public:
     template <typename... Args>
     auto add_asset(Args&&... args) -> Handle<T>
     {
-        auto const id = [this] {
-            for (;;) {
-                auto const id = HandleId::random<T>();
-                if (!m_assets.contains(id)) {
-                    return id;
-                }
-            }
-        }();
-
+        auto const id = HandleId::create<T>();
         m_assets.insert_or_assign(id, T(FWD(args)...)); // will always suceed
         return Handle<T>{ id };
     }

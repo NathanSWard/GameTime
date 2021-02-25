@@ -80,7 +80,7 @@ namespace internal {
 } // namespace internal
 
 class TypeMap {
-    std::unordered_map<entt::id_type, internal::void_ptr> m_map;
+    std::unordered_map<type_id_t, internal::void_ptr> m_map;
 
 public:
 
@@ -102,7 +102,7 @@ public:
     template <typename T, typename... Args>
     auto insert(Args&&... args) -> T&
     {
-        auto const [iter, ok] = m_map.insert_or_assign(entt::type_id<T>().hash(), internal::void_ptr::template create<T>(FWD(args)...));
+        auto const [iter, ok] = m_map.insert_or_assign(type_id<T>(), internal::void_ptr::template create<T>(FWD(args)...));
         UNUSED(ok);
         return *static_cast<T*>(iter->second.data());
     }
@@ -116,7 +116,7 @@ public:
     template <typename T>
     auto remove() -> std::unique_ptr<T>
     {
-        if (auto const iter = m_map.find(entt::type_id<T>().hash()); iter == m_map.end()) {
+        if (auto const iter = m_map.find(type_id<T>()); iter == m_map.end()) {
             return nullptr;
         }
         else {
@@ -129,7 +129,7 @@ public:
     template <typename T>
     [[nodiscard]] auto get() -> tl::optional<T&>
     {
-        if (auto const iter = m_map.find(entt::type_id<T>().hash()); iter == m_map.end()) {
+        if (auto const iter = m_map.find(type_id<T>()); iter == m_map.end()) {
             return {};
         } 
         else {
@@ -141,7 +141,7 @@ public:
     template <typename T>
     [[nodiscard]] auto get() const -> tl::optional<T const&>
     {
-        if (auto const iter = m_map.find(entt::type_id<T>().hash()); iter == m_map.end()) {
+        if (auto const iter = m_map.find(type_id<T>()); iter == m_map.end()) {
             return {};
         }
         else {
