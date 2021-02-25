@@ -7,7 +7,7 @@ using namespace boost::ut;
 void mutex_test()
 {
     "[Mutex]"_test = [] {
-        auto mutex = make_mutex<int>(0);
+        auto mutex = Mutex<int>::create(0);
 
         should("prevent thread from taking lock") = [&] {
             auto lock = mutex.lock();

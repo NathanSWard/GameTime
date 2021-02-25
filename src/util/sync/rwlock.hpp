@@ -47,17 +47,19 @@ public:
 
     [[nodiscard]] constexpr auto operator*() noexcept -> T& { return m_rwlock->m_value; }
     [[nodiscard]] constexpr auto operator*() const noexcept -> T const& { return m_rwlock->m_value; }
+    [[nodiscard]] constexpr auto operator->() noexcept -> T* { return std::addressof(m_rwlock->m_value); }
+    [[nodiscard]] constexpr auto operator->() const noexcept -> T const* { return std::addressof(m_rwlock->m_value); }
 };
 
 template <typename T>
 class ReadGuard 
 {
-    RwLock<T>* m_rwlock;
+    RwLock<T> const* m_rwlock;
 
     template <typename U>
     friend class RwLock;
 
-    constexpr explicit ReadGuard(RwLock<T>& rwlock) noexcept
+    constexpr explicit ReadGuard(RwLock<T> const& rwlock) noexcept
         : m_rwlock(std::addressof(rwlock))
     {}
 
@@ -82,15 +84,15 @@ public:
         }
     }
 
-    [[nodiscard]] constexpr auto operator*() noexcept -> T& { return m_rwlock->m_value; }
     [[nodiscard]] constexpr auto operator*() const noexcept -> T const& { return m_rwlock->m_value; }
+    [[nodiscard]] constexpr auto operator->() const noexcept -> T const* { return std::addressof(m_rwlock->m_value); }
 };
 
 template <typename T>
 class RwLock
 {
     T m_value;
-    std::shared_mutex m_mutex;
+    std::shared_mutex mutable m_mutex;
 
     template <typename U>
     friend class WriteGuard;
@@ -102,6 +104,12 @@ public:
     constexpr explicit RwLock(in_place_t, Args&&... args)
         : m_value(FWD(args)...)
     {}
+
+    template <typename... Args>
+    [[nodiscard]] static auto create(Args&&... args) -> RwLock
+    {
+        return RwLock<T>(in_place, FWD(args)...);
+    }
 
     constexpr RwLock(RwLock&& other) noexcept
         : m_value(
@@ -124,7 +132,7 @@ public:
     [[nodiscard]] constexpr auto write() noexcept -> WriteGuard<T>
     {
         m_mutex.lock();
-        return WriteGuard<T>{ *this };
+        return WriteGuard<T>{ const_cast<RwLock&>(*this) };
     }
 
     [[nodiscard]] constexpr auto try_write() noexcept -> tl::optional<WriteGuard<T>>
@@ -132,16 +140,16 @@ public:
         if (!m_mutex.try_lock()) {
             return {};
         }
-        return WriteGuard<T>{ *this };
+        return WriteGuard<T>{ const_cast<RwLock&>(*this) };
     }
 
-    [[nodiscard]] constexpr auto read() noexcept -> ReadGuard<T>
+    [[nodiscard]] constexpr auto read() const noexcept -> ReadGuard<T>
     {
         m_mutex.lock_shared();
         return ReadGuard<T>{ *this };
     }
 
-    [[nodiscard]] constexpr auto try_read() noexcept -> tl::optional<ReadGuard<T>>
+    [[nodiscard]] constexpr auto try_read() const noexcept -> tl::optional<ReadGuard<T>>
     {
         if (!m_mutex.try_lock_shared()) {
             return {};
@@ -149,9 +157,3 @@ public:
         return ReadGuard<T>{ *this };
     }
 };
-
-template <typename T, typename... Args>
-constexpr auto make_rwlock(Args&&... args) -> RwLock<T>
-{
-    return RwLock<T>{ in_place, FWD(args)... };
-}

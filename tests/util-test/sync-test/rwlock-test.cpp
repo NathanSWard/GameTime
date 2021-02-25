@@ -7,7 +7,7 @@ using namespace boost::ut;
 void rwlock_test()
 {
     "[RwLock]"_test = [] {
-        auto rwlock = make_rwlock<int>(0);
+        auto rwlock = RwLock<int>::create(0);
 
         should("allow only 1 thread to write") = [&] {
             auto write = rwlock.write();

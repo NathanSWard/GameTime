@@ -45,13 +45,15 @@ public:
 
     [[nodiscard]] constexpr auto operator*() noexcept -> T& { return m_mutex->m_value; }
     [[nodiscard]] constexpr auto operator*() const noexcept -> T const& { return m_mutex->m_value; }
+    [[nodiscard]] constexpr auto operator->() noexcept -> T* { return std::addressof(m_mutex->m_value); }
+    [[nodiscard]] constexpr auto operator->() const noexcept -> T const* { return std::addressof(m_mutex->m_value); }
 };
 
 template <typename T>
 class Mutex 
 {
     T m_value;
-    std::mutex m_mutex;
+    std::mutex mutable m_mutex;
 
     template <typename U>
     friend class MutexGuard;
@@ -61,6 +63,12 @@ public:
     constexpr explicit Mutex(in_place_t, Args&&... args)
         : m_value(FWD(args)...)
     {}
+
+    template <typename... Args>
+    static auto create(Args&&...args) -> Mutex
+    {
+        return Mutex<T>(in_place, FWD(args)...);
+    }
 
     constexpr Mutex(Mutex&& other) noexcept
         : m_value(
@@ -94,9 +102,3 @@ public:
         return MutexGuard<T>{ *this };
     }
 };
-
-template <typename T, typename... Args>
-constexpr auto make_mutex(Args&&... args) -> Mutex<T>
-{
-    return Mutex<T>{ in_place, FWD(args)... };
-}
