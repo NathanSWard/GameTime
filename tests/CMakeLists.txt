@@ -12,6 +12,7 @@ set(TEST_SOURCES
 	"core-test/assets-test/handle-test.cpp"
 	"util-test/sync-test/mutex-test.cpp"
 	"util-test/sync-test/rwlock-test.cpp"
+	"util-test/uuid-test.cpp"
 	)
 
 include_directories(ut)
