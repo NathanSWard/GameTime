@@ -9,11 +9,14 @@ set(TEST_SOURCES
 	"core-test/game-test.cpp" 
 	"util-test/common-test.cpp" 
 	"core-test/assets-test/assets-test.cpp"
+	"core-test/assets-test/handle-test.cpp"
+	"util-test/sync-test/mutex-test.cpp"
+	"util-test/sync-test/rwlock-test.cpp"
 	)
 
-add_executable(${TEXT_EXE} test_main.cpp ${TEST_SOURCES})
-
 include_directories(ut)
+
+add_executable(${TEXT_EXE} test_main.cpp ${TEST_SOURCES})
 
 find_package(entt CONFIG REQUIRED)
 target_link_libraries(${TEXT_EXE} PRIVATE EnTT::EnTT)

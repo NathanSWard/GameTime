@@ -1,5 +1,7 @@
 #pragma once
 
+void mutex_test();
+void rwlock_test();
 void common_test();
 void meta_test();
 void rng_test();
@@ -7,6 +9,8 @@ void type_map_test();
 
 void util_test()
 {
+    mutex_test();
+    rwlock_test();
     common_test();
     meta_test();
     rng_test();

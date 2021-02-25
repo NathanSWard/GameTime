@@ -7,6 +7,9 @@
 #define MOV(...) static_cast<std::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
 #define FWD(...) static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
 
+struct in_place_t {};
+inline constexpr in_place_t in_place{};
+
 namespace hash {
 
     struct string_hash
@@ -20,15 +23,3 @@ namespace hash {
     };
 
 } // namespace hash
-
-namespace fs { // filesystem 
-
-    constexpr auto get_extension(std::string_view const path) noexcept -> std::string_view
-    {
-        if (auto const pos = path.find_last_of('.'); pos != std::string_view::npos) {
-            return path.substr(pos);
-        }
-        return "";
-    }
-
-} // namespace filesystem
