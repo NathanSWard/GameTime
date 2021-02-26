@@ -9,7 +9,7 @@ class Uuid {
     std::uint64_t m_a;
     std::uint64_t m_b;
 
-    friend class std::hash<Uuid>;
+    friend struct std::hash<Uuid>;
 
 public:
     constexpr Uuid(std::uint64_t const a, std::uint64_t const b) noexcept 

@@ -1,25 +1,34 @@
 #include <core/assets/handle.hpp>
-#include <core/assets/assets.hpp>
 #include <ut.hpp>
+#include <unordered_map>
 
 using namespace boost::ut;
 
 void handle_test()
 {
-    "[Handle]"_test = [] {
-        auto int_assets = Assets<int>{};
-        auto char_assets = Assets<char>{};
+    using map_t = std::unordered_map<HandleId, int>;
 
-        auto int_handle = int_assets.add_asset(0);
-        auto char_handle = char_assets.add_asset('a');
+    "[Handle]"_test = [] {
+        auto int_handle = Handle<int>{ HandleId::random<int>() };
+        auto char_handle = Handle<char>{ HandleId::random<char>() };
 
         auto untyped_int_handle = int_handle.untyped();
         auto untyped_char_handle = char_handle.untyped();
+            
+        expect(int_handle.id() != char_handle.id());
 
-        expect(int_handle == untyped_int_handle);
-        expect(char_handle == untyped_char_handle);
+        expect(int_handle.id() == untyped_int_handle.id());
+        expect(char_handle.id() == untyped_char_handle.id());
 
         expect(untyped_int_handle.typed<int>().has_value());
         expect(!untyped_int_handle.typed<char>().has_value());
+
+        auto path_handle1 = Handle<int>{ HandleId::from_path("an-int-file") };
+        auto path_handle2 = Handle<char>{ HandleId::from_path("a-char-file") };
+
+        expect(path_handle1.id() != path_handle2.id());
+
+        expect(int_handle.id() != path_handle1.id());
+        expect(char_handle.id() != path_handle2.id());
     };
 }
