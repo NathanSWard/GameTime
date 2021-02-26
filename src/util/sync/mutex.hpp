@@ -59,6 +59,8 @@ class Mutex
     friend class MutexGuard;
 
 public:
+    constexpr Mutex() = default;
+
     template <typename... Args>
     constexpr explicit Mutex(in_place_t, Args&&... args)
         : m_value(FWD(args)...)

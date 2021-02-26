@@ -14,6 +14,7 @@ set(TEST_SOURCES
 	"util-test/sync-test/rwlock-test.cpp"
 	"util-test/uuid-test.cpp"
 	"util-test/memory-test/rc-test.cpp"
+	"core-test/assets-test/asset_server-test.cpp"
 	)
 
 include_directories(ut)

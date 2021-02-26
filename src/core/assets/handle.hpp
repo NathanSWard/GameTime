@@ -12,6 +12,8 @@ class Handle;
 
 class UntypedHandle;
 
+using AssetPathId = std::uint64_t;
+
 class HandleId 
 {
 public:
@@ -19,16 +21,22 @@ public:
         std::uint64_t id{};
         type_id_t   type_id{};
     };
-    using path_id_t = std::uint64_t;
 
 private:
     union {
-        path_id_t m_path_id;
+        AssetPathId m_path_id;
         Uid m_uid;
     };
     bool m_is_path_id = false;
 
-    constexpr explicit HandleId(path_id_t const path_id) noexcept
+    template <typename T>
+    friend class Handle;
+    friend class UntypedHandle;
+    friend struct std::hash<HandleId>;
+    friend class AssetServer;
+
+public:
+    constexpr explicit HandleId(AssetPathId const path_id) noexcept
         : m_path_id(path_id)
         , m_is_path_id(true)
     {}
@@ -38,12 +46,6 @@ private:
         , m_is_path_id(false)
     {}
 
-    template <typename T>
-    friend class Handle;
-    friend class UntypedHandle;
-    friend struct std::hash<HandleId>;
-
-public:
     constexpr HandleId(HandleId&&) noexcept = default;
     constexpr HandleId(HandleId const&) noexcept = default;
     constexpr HandleId& operator=(HandleId&&) noexcept = default;
@@ -91,8 +93,6 @@ struct std::hash<HandleId>
         return std::hash<std::string_view>{}(str);
     }
 };
-
-class UntypedHandle;
 
 template <typename T>
 class Handle 

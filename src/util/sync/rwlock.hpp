@@ -100,6 +100,8 @@ class RwLock
     friend class ReadGuard;
 
 public:
+    constexpr RwLock() = default;
+
     template <typename... Args>
     constexpr explicit RwLock(in_place_t, Args&&... args)
         : m_value(FWD(args)...)
