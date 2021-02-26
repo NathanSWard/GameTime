@@ -4,6 +4,7 @@
 #include "ecs/resource.hpp"
 #include "ecs/world.hpp"
 #include "ecs/system_scheduler.hpp"
+#include <core/assets/asset_server.hpp>
 
 class Game;
 
@@ -24,13 +25,31 @@ class Game {
     Scheduler m_scheduler;
 
 public:
+    // resources
+    auto resources() const noexcept -> Resources const&
+    {
+        return m_resources;
+    }
 
+    auto resources() noexcept -> Resources&
+    {
+        return m_resources;
+    }
+
+    template <typename R, typename... Args>
+    auto add_resource(Args&&... args) -> Resource<R>
+    {
+        return m_resources.add_resource<R>(FWD(args)...);
+    }
+
+    // plugins
     template <Plugin P>
     auto add_plugin(P&& p) -> decltype(auto)
     {
         return FWD(p).build(*this);
     }
 
+    // systems
     template <typename S>
     auto add_system(S&& s) -> system_id_t
     {
@@ -43,12 +62,36 @@ public:
         return m_startup_scheduler.add_system(FWD(s));
     }
 
-    template <typename R, typename... Args>
-    auto add_resource(Args&&... args) -> Resource<R>
+    // components
+    template <typename... Cs>
+    auto prepare_components() -> Game&
     {
-        return m_resources.add_resource<R>(FWD(args)...);
+        (m_world.prepare<Cs>(), ...);
+        return *this;
     }
 
+    // assets
+    template <typename T>
+    auto add_asset() -> Game&
+    {
+        DEBUG_ASSERT(resources().contains_resource<AssetServer>());
+        auto server = resources().get_resource<AssetServer>().value();
+        add_resource<Assets<T>>(server->register_asset_type<T>());
+        add_system(update_assets_system<T>);
+        prepare_components<Handle<T>>();
+        return *this;
+    }
+
+    template <typename T, typename... Args>
+    auto add_asset_loader(Args&&... args) -> Game&
+    {
+        DEBUG_ASSERT(resources().contains_resource<AssetServer>());
+        auto server = resources().get_resource<AssetServer>().value();
+        server->add_asset_loader<T>(FWD(args)...);
+        return *this;
+    }
+
+    // run
     void run()
     {
         auto const quit = m_resources.add_resource<Quit>();

@@ -6,24 +6,24 @@ using namespace boost::ut;
 
 std::vector<std::byte> const gbytes = std::vector{ 10, std::byte{} };
 
-struct TestAssetIo final : AssetIo
+struct TestAssetIo final : public AssetIo
 {
-    auto load_path(std::string_view) const -> std::future<AssetIo::Result> final
+    auto load_path(std::string_view) const -> std::function<Result()> final
     {
-        return std::async(std::launch::async, [] {
-            return AssetIo::Result(gbytes);
-            });
+        return []() -> Result { return gbytes; };
     }
+
+    auto root_path() const noexcept -> std::filesystem::path final { return std::filesystem::path("."); }
 };
 
-struct FailingTestAssetIo final : AssetIo
+struct FailingTestAssetIo final : public AssetIo
 {
-    auto load_path(std::string_view) const -> std::future<AssetIo::Result> final
+    auto load_path(std::string_view) const -> std::function<Result()> final
     {
-        return std::async(std::launch::async, [] {
-            return AssetIo::Result(tl::make_unexpected(AssetIo::Error::IoError));
-            });
+        return []() -> Result { return tl::make_unexpected(Error::IoError); };
     }
+
+    auto root_path() const noexcept -> std::filesystem::path final { return std::filesystem::path("."); }
 };
 
 constexpr std::string_view asset_ext = "hello";

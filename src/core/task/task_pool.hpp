@@ -1,15 +1,17 @@
 #pragma once
 
 #include <concepts>
-#include <future>
+#include <thread>
 #include <util/common.hpp>
 
+// TODO: Make this a resource
 class TaskPool
 {
 public:
     template <std::invocable F>
-    [[nodiscard]] auto execute(F&& f) const
+    [[nodiscard]] void execute(F&& f) const
     {
-        return std::async(std::launch::async, FWD(f));
+        auto t = std::thread(FWD(f));
+        t.detach();
     }
 };

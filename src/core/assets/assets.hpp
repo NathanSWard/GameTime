@@ -88,4 +88,3 @@ public:
     [[nodiscard]] auto size() const noexcept -> std::size_t { return m_assets.size(); }
     [[nodiscard]] auto empty() const noexcept -> bool { return m_assets.empty(); }
 };
-

@@ -11,10 +11,11 @@
 #include <debug/debug.hpp>
 #include <util/common.hpp>
 #include <util/sync/rwlock.hpp>
+#include <core/ecs/resource.hpp>
 #include <core/task/task_pool.hpp>
 
 #include "assets.hpp"
-#include "asset_io.hpp"
+#include "asset_io/asset_io.hpp"
 #include "handle.hpp"
 #include "loader.hpp"
 
@@ -75,7 +76,8 @@ public:
     template <typename T>
     using AssetServerResult = tl::expected<T, Error>;
 
-    AssetServer(std::unique_ptr<AssetIo> asset_io, TaskPool taskpool) noexcept
+    template <IsAssetIo AIo>
+    AssetServer(std::unique_ptr<AIo> asset_io, TaskPool taskpool) noexcept
         : m_internal(std::make_shared<AssetServerInternal>(MOV(asset_io), MOV(taskpool)))
     {
         DEBUG_ASSERT(m_internal->asset_io != nullptr);
@@ -208,7 +210,7 @@ public:
         };
 
         // load the asset file's bytes
-        auto bytes = m_internal->asset_io->load_path(path).get();
+        auto bytes = m_internal->asset_io->load_path(path)();
         if (!bytes) {
             set_load_state(LoadState::Failed);
             return tl::make_unexpected(Error::AssetIoError);
@@ -254,12 +256,12 @@ public:
 
     [[nodiscard]] auto load_untracked(std::string_view const path) const -> HandleId
     {
-        auto const future = m_internal->task_pool.execute([server = *this, path = std::string(path)]{
+        // TODO: Revamp TaskPool to return a `future` like object
+         m_internal->task_pool.execute([server = *this, path = std::string(path)]{
             if (auto const result = server.load_sync(path); !result) {
                 ;// LOG THE ERROR!!!
             }
             });
-        UNUSED(future);
         return HandleId::from_path(path);
     }
 
@@ -292,3 +294,9 @@ public:
         }
     }
 };
+
+template <typename T>
+void update_assets_system(Resource<AssetServer const> server, Resource<Assets<T>> assets)
+{
+    server->update_assets(*assets);
+}
