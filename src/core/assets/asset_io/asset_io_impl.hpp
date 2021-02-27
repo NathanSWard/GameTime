@@ -19,7 +19,7 @@ public:
     {
         auto const full_path = m_root_path / std::filesystem::path{ path };
         return [path = MOV(full_path)] () -> Result {
-            auto* const file = std::fopen(path.string().c_str(), "r");
+            auto* const file = std::fopen(path.string().c_str(), "rb");
             if (file == nullptr) {
                 return tl::make_unexpected(Error::IoError);
             }
@@ -31,6 +31,7 @@ public:
             auto buffer = std::vector<std::byte>(size, std::byte{});
 
             if (std::fread(buffer.data(), sizeof(std::byte), size, file) != size) {
+                std::fclose(file);
                 return tl::make_unexpected(Error::IoError);
             }
 
