@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-struct SDLLoader final : public AssetLoader
+struct SDL_IMG_Loader final : public AssetLoader
 {
     static constexpr auto exts = std::array<std::string_view, 1>{ "png" };
     

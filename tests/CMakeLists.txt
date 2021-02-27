@@ -16,7 +16,7 @@ set(TEST_SOURCES
 	"util-test/memory-test/rc-test.cpp"
 	"core-test/assets-test/asset_server-test.cpp"
 	"core-test/assets-test/asset_io-test/asset_io_impl-test.cpp"
-	"sdl-test/sdl_loader-test.cpp"
+	"sdl-test/sdl_img_loader-test.cpp"
 	)
 
 include_directories(ut)

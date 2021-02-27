@@ -1,6 +1,6 @@
 #include <ut.hpp>
 #include <core/assets/asset_io/asset_io_impl.hpp>
-#include <sdl/sdl_loader.hpp>
+#include <sdl/sdl_img_loader.hpp>
 #include <filesystem>
 
 #include <errno.h>
@@ -16,13 +16,13 @@ struct IMGContext {
     ~IMGContext() { IMG_Quit(); }
 };
 
-void sdl_loader_test()
+void sdl_img_loader_test()
 {
-    "[SDLLoader]"_test = [] {
+    "[SDL_IMG_Loader]"_test = [] {
         auto context = IMGContext{};
         expect(((context.result & flags) == flags) >> fatal);
 
-        auto loader = SDLLoader();
+        auto loader = SDL_IMG_Loader();
         auto const io = FileAssetIo("assets");
 
         should("load png") = [&] {
