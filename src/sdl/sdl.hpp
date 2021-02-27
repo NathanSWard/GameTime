@@ -117,6 +117,36 @@ namespace sdl {
         ~Renderer() noexcept { if (m_renderer) SDL_DestroyRenderer(m_renderer); }
     };
 
+    class Surface {
+        SDL_Surface* m_surface = nullptr;
+
+        constexpr Surface(SDL_Surface* const surface) noexcept
+            : m_surface(surface)
+        {}
+
+    public:
+        Surface(Surface const&) = delete;
+        Surface(Surface&& other) noexcept : m_surface(std::exchange(other.m_surface, nullptr)) {}
+
+        Surface& operator=(Surface&& other) noexcept {
+            if (m_surface) {
+                SDL_FreeSurface(m_surface);
+            }
+            m_surface = std::exchange(other.m_surface, nullptr);
+            return *this;
+        }
+
+        static auto from_raw(SDL_Surface* const surface) -> Surface
+        {
+            return Surface(surface);
+        }
+
+        constexpr auto raw() noexcept -> SDL_Surface* { return m_surface; }
+        constexpr auto raw() const noexcept -> SDL_Surface const* { return m_surface; }
+
+        ~Surface() noexcept { if (m_surface) SDL_FreeSurface(m_surface); }
+    };
+
     class Texture {
         SDL_Texture* m_texture = nullptr;
 
@@ -134,6 +164,15 @@ namespace sdl {
             }
             m_texture = std::exchange(other.m_texture, nullptr);
             return *this;
+        }
+
+        static auto from_surface(Renderer& rend, Surface& surface) -> tl::expected<Texture, Error>
+        {
+            auto const texture = SDL_CreateTextureFromSurface(rend.raw(), surface.raw());
+            if (texture == nullptr) {
+                return tl::make_unexpected(Error::current());
+            }
+            return Texture(texture);
         }
 
         static auto create(Renderer& rend, char const* const path) -> tl::expected<Texture, Error> {

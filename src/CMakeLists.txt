@@ -1,5 +1,10 @@
 set(EXECUTABLE_NAME CNGame)
+
 add_executable(${EXECUTABLE_NAME} main.cpp)
+
+# copy assets folder
+file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/assets")
+file(COPY "${CMAKE_SOURCE_DIR}/assets" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
 # ------------
 # dependencies
