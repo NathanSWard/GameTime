@@ -33,3 +33,7 @@ find_package(tl-expected CONFIG REQUIRED)
 find_package(tl-optional CONFIG REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE tl::expected)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE tl::optional)
+
+# eigen3
+find_package(eigen3 CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE Eigen3::Eigen)
