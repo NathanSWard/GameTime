@@ -4,6 +4,20 @@
 #include <util/common.hpp>
 #include <unordered_set>
 
+struct ElementState
+{
+    enum
+    {
+        Pressed,
+        Released,
+    } state = Pressed;
+
+    constexpr auto is_pressed() const noexcept -> bool
+    {
+        return state == Pressed;
+    }
+};
+
 template <typename T>
 class Input
 {

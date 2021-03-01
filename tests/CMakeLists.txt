@@ -19,6 +19,7 @@ set(TEST_SOURCES
 	"sdl-test/sdl_img_loader-test.cpp"
 	"core-test/events-test/events-test.cpp"
 	"core-test/input-test/input-test.cpp"
+	"core-test/input-test/mouse-test.cpp"
 	)
 
 include_directories(ut)
