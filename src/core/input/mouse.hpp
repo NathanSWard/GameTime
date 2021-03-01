@@ -93,7 +93,8 @@ void mouse_button_input_system(
     EventReader<MouseButtonInput> mouse_button_input_events)
 {
     mouse_button_input->update();
-    for (auto const& e : mouse_button_input_events.iter()) {
+    auto events = mouse_button_input_events.iter();
+    for (auto const& e : events) {
         switch (e.state.state) {
             case ElementState::Pressed: 
                 mouse_button_input->press(e.button); 
