@@ -79,9 +79,9 @@ public:
     }
 
     [[nodiscard]] auto begin() { return m_assets.begin(); }
-    [[nodiscard]] auto end() { return m_assets.begin(); }
+    [[nodiscard]] auto end() { return m_assets.end(); }
     [[nodiscard]] auto begin() const { return m_assets.begin(); }
-    [[nodiscard]] auto end() const { return m_assets.begin(); }
+    [[nodiscard]] auto end() const { return m_assets.end(); }
 
     void clear() { m_assets.clear(); }
     void reserve(std::size_t const size) { m_assets.reserve(size); }
