@@ -29,14 +29,14 @@ void type_map_test()
             expect(!tm.contains<int>());
         };
 
-        expect(tm.insert<int>(42) == 42);
+        expect(tm.set<int>(42) == 42);
         should("have one element") = [&tm] {
             expect(!tm.empty());
             expect(tm.size() == 1);
             expect(tm.contains<int>());
         };
 
-        expect(tm.insert<std::string_view>("hello") == "hello");
+        expect(tm.set<std::string_view>("hello") == "hello");
         should("have two elements") = [&tm] {
             expect(!tm.empty());
             expect(tm.size() == 2);
@@ -63,7 +63,7 @@ void type_map_test()
             int count = 0;
             {
                 TypeMap tm;
-                tm.insert<InvokeDestructor>(count);
+                tm.try_add<InvokeDestructor>(count);
             }
             expect(count == 1);
         };

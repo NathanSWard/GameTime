@@ -92,12 +92,22 @@ class LocalResources
 
 public:
     template <typename T, typename... Args>
-    auto add_local_resource(system_id_t const id, Args&&... args) -> Local<T>
+    auto try_add_local_resource(system_id_t const id, Args&&... args) -> Local<T>
     {
         auto [iter, ok] = m_local_resources.try_emplace(id);
         UNUSED(ok);
 
-        T& local = iter->second.insert<T>(FWD(args)...);
+        T& local = iter->second.try_add<T>(FWD(args)...);
+        return Local(local);
+    }
+
+    template <typename T, typename... Args>
+    auto set_local_resource(system_id_t const id, Args&&... args) -> Local<T>
+    {
+        auto [iter, ok] = m_local_resources.try_emplace(id);
+        UNUSED(ok);
+
+        T& local = iter->second.set<T>(FWD(args)...);
         return Local(local);
     }
 
@@ -175,9 +185,16 @@ public:
 
     // Resources
     template <typename T, typename... Args>
-    auto add_resource(Args&&... args) -> Resource<T>
+    auto try_add_resource(Args&&... args) -> Resource<T>
     {
-        T& resource = m_resources.insert<T>(FWD(args)...);
+        T& resource = m_resources.try_add<T>(FWD(args)...);
+        return Resource(resource);
+    }
+
+    template <typename T, typename... Args>
+    auto set_resource(Args&&... args) -> Resource<T>
+    {
+        T& resource = m_resources.set<T>(FWD(args)...);
         return Resource(resource);
     }
 

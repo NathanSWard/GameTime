@@ -49,7 +49,7 @@ void resource_test()
         Resources rm;
         
         should("add resource") = [&rm] {
-            rm.add_resource<int>(42);
+            rm.set_resource<int>(42);
             expect(rm.contains_resource<int>());
 
             auto res = rm.get_resource<int>();
@@ -82,8 +82,8 @@ void resource_test()
         };
 
         should("add local resources") = [&rm] {
-            rm.local().add_local_resource<int>(id1, 42);
-            rm.local().add_local_resource<char>(id2, 'a');
+            rm.local().set_local_resource<int>(id1, 42);
+            rm.local().set_local_resource<char>(id2, 'a');
 
             should("contains appropriate local resources") = [&] {
                 expect(rm.local().contains_local_resource<int>(id1));

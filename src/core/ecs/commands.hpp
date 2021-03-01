@@ -52,9 +52,15 @@ public:
     }
 
     template <typename R, typename... Args>
-    auto add_resource(Args&&... args) -> Resource<R>
+    auto try_add_resource(Args&&... args) -> Resource<R>
     {
-        return m_resources->add_resource<R>(FWD(args)...);
+        return m_resources->try_add_resource<R>(FWD(args)...);
+    }
+
+    template <typename R, typename... Args>
+    auto set_resource(Args&&... args) -> Resource<R>
+    {
+        return m_resources->set_resource<R>(FWD(args)...);
     }
 
     template <typename R>

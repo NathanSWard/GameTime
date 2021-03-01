@@ -1,6 +1,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
+#include <core/events/events.hpp>
 #include "commands.hpp"
 #include "util/meta.hpp"
 #include "util/common.hpp"
@@ -65,7 +66,9 @@ namespace internal {
 
     template <>
     struct valid_system_arg<Commands> : std::true_type {};
-    
+
+    template <typename T>
+    struct valid_system_arg<EventReader<T>> : std::true_type {};
 
     // Depending on the argument type, returns the correct value from either the `Resources` or the `World`
     template <typename Arg>
@@ -75,7 +78,7 @@ namespace internal {
     struct get_system_arg_impl<Query<With<Ws...>, Without<WOs...>, VG>>
     {
         using query_t = Query<With<Ws...>, Without<WOs...>, VG>;
-        auto operator()(system_id_t, Resources&, World& world) -> decltype(auto)
+        auto operator()(system_id_t, Resources&, World& world) const -> decltype(auto)
         {
             if constexpr (std::is_same_v<VG, View>) {
                 return query_t{ world.view<Ws...>(entt::exclude<WOs...>) };
@@ -92,7 +95,7 @@ namespace internal {
     template <typename R>
     struct get_system_arg_impl<Resource<R>>
     {
-        auto operator()(system_id_t, Resources& res, World&) -> decltype(auto)
+        auto operator()(system_id_t, Resources& res, World&) const -> decltype(auto)
         {
             return res.get_resource<R>();
         }
@@ -101,7 +104,7 @@ namespace internal {
     template <typename L>
     struct get_system_arg_impl<Local<L>>
     {
-        auto operator()(system_id_t const id, Resources& res, World&) -> decltype(auto)
+        auto operator()(system_id_t const id, Resources& res, World&) const -> decltype(auto)
         {
             return res.local().get_local_resource<L>(id);
         }
@@ -110,9 +113,23 @@ namespace internal {
     template <>
     struct get_system_arg_impl<Commands>
     {
-        constexpr auto operator()(system_id_t, Resources& res, World& w) -> Commands
+        constexpr auto operator()(system_id_t, Resources& res, World& w) const -> Commands
         {
             return Commands{ res, w };
+        }
+    };
+
+    template <typename T>
+    struct get_system_arg_impl<EventReader<T>>
+    {
+        auto operator()(system_id_t const id, Resources& res, World&) const -> EventReader<T>
+        {
+            auto events = res.get_resource<Events<T> const>();
+            DEBUG_ASSERT(events.has_value());
+
+            using count_t = typename EventReader<T>::EventCount;
+            auto const local = res.local().try_add_local_resource<count_t>(id, count_t{ 1 });
+            return EventReader<T>(local, *MOV(events));
         }
     };
 

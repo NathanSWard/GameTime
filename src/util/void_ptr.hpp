@@ -40,7 +40,7 @@ public:
     template <typename T, typename... Args>
     static constexpr auto create(Args&&... args) noexcept -> void_ptr
     {
-        T* ptr = new T(std::forward<Args>(args)...);
+        T* ptr = new T(FWD(args)...);
         return void_ptr(static_cast<void*>(ptr), invoke_destructor<T>);
     }
 

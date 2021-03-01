@@ -29,7 +29,15 @@ public:
     }
 
     template <typename T, typename... Args>
-    auto insert(Args&&... args) -> T&
+    auto try_add(Args&&... args) -> T&
+    {
+        auto const [iter, ok] = m_map.try_emplace(type_id<T>(), void_ptr::create<T>(FWD(args)...));
+        UNUSED(ok);
+        return *static_cast<T*>(iter->second.data());
+    }
+
+    template <typename T, typename... Args>
+    auto set(Args&&... args) -> T&
     {
         auto const [iter, ok] = m_map.insert_or_assign(type_id<T>(), void_ptr::create<T>(FWD(args)...));
         UNUSED(ok);

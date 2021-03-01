@@ -17,6 +17,7 @@ namespace funcs {
     void comands_and_other(Commands, Query<With<int>>, Resource<char>) {}
     void local(Local<int>) {}
     void local_and_other(Local<int>, Commands, Query<With<int>>, Resource<char>) {}
+    void event_reader(EventReader<int>) {}
 }
 
 namespace execute {
@@ -41,6 +42,7 @@ void system_test()
         auto system9 = System::create(funcs::comands_and_other, system_id_t{ 9 });
         auto system10 = System::create(funcs::local, system_id_t{ 10 });
         auto system11 = System::create(funcs::local_and_other, system_id_t{ 11 });
+        auto system12 = System::create(funcs::event_reader, system_id_t{ 12 });
     };
 
     "[Create Systems: Lambda]"_test = [] {
@@ -56,8 +58,8 @@ void system_test()
         auto system1 = System::create(increment_local, system_id_t{ 1 });
         auto system2 = System::create(increment_local, system_id_t{ 2 });
 
-        auto const local1 = r.local().add_local_resource<int>(system_id_t{ 1 }, 0);
-        auto const local2 = r.local().add_local_resource<int>(system_id_t{ 2 }, 99);
+        auto const local1 = r.local().set_local_resource<int>(system_id_t{ 1 }, 0);
+        auto const local2 = r.local().set_local_resource<int>(system_id_t{ 2 }, 99);
 
         expect(*local1 == 0);
         expect(*local2 == 99);
@@ -73,7 +75,7 @@ void system_test()
 
     "[Execute System]"_test = [] {
         auto r = Resources{};
-        r.add_resource<char>('a'); // this should not affect the systems
+        r.set_resource<char>('a'); // this should not affect the systems
 
         auto w = World{};
 
@@ -95,7 +97,7 @@ void system_test()
         };
 
         // add required resource
-        r.add_resource<int>(32);
+        r.set_resource<int>(32);
 
         should("systems with resources should execute") = [&] {
             execute::global_count = 0;
@@ -117,7 +119,7 @@ void system_test()
 
     "[System Scheduler]"_test = [] {
         auto r = Resources{};
-        r.add_resource<int>(42);
+        r.set_resource<int>(42);
         auto w = World{};
 
         auto scheduler = Scheduler{};
@@ -156,7 +158,7 @@ void system_test()
 
     "[System Scheduler: Validate Resources]"_test = [] {
         auto r = Resources{};
-        r.add_resource<int>(0);
+        r.set_resource<int>(0);
         auto w = World{};
         auto scheduler = Scheduler{};
 
@@ -187,7 +189,7 @@ void system_test()
         auto add_entity_and_resource = [](Commands cmds) {
             auto e = cmds.spawn();
             cmds.add_component<int>(e, 42);
-            cmds.add_resource<int>(42);
+            cmds.set_resource<int>(42);
         };
 
         auto system = scheduler.add_system(add_entity_and_resource);

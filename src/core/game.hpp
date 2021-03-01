@@ -37,9 +37,15 @@ public:
     }
 
     template <typename R, typename... Args>
-    auto add_resource(Args&&... args) -> Resource<R>
+    auto try_add_resource(Args&&... args) -> Resource<R>
     {
-        return m_resources.add_resource<R>(FWD(args)...);
+        return m_resources.try_add_resource<R>(FWD(args)...);
+    }
+
+    template <typename R, typename... Args>
+    auto set_resource(Args&&... args) -> Resource<R>
+    {
+        return m_resources.set_resource<R>(FWD(args)...);
     }
 
     // plugins
@@ -94,7 +100,7 @@ public:
     // run
     void run()
     {
-        auto const quit = m_resources.add_resource<Quit>();
+        auto const quit = m_resources.set_resource<Quit>();
         m_startup_scheduler.run_systems(m_resources, m_world);
         DEBUG_ASSERT(m_resources.contains_resource<Quit>());
 
