@@ -1,6 +1,6 @@
 #include "ut.hpp"
 #include "core/ecs/system.hpp"
-#include "core/ecs/system_scheduler.hpp"
+#include "core/ecs/scheduler.hpp"
 #include "core/ecs/resource.hpp"
 
 using namespace boost::ut;
@@ -20,7 +20,7 @@ namespace funcs {
     void event_reader(EventReader<int>) {}
 }
 
-namespace execute {
+namespace system_test_execute {
     int global_count = 0;
 
     void only_query(Query<With<int>>) { ++global_count; }
@@ -31,23 +31,23 @@ namespace execute {
 void system_test()
 {
     "[Create Systems: Free Function]"_test = [] {
-        auto system1 = System::create(funcs::only_query, system_id_t{ 1 });
-        auto system2 = System::create(funcs::only_resource, system_id_t{ 2 });
-        auto system3 = System::create(funcs::query_and_resources, system_id_t{ 3 });
-        auto system4 = System::create(funcs::query_group, system_id_t{ 4 });
-        auto system5 = System::create(funcs::multiple_queries, system_id_t{ 5 });
-        auto system6 = System::create(funcs::multiple_resources, system_id_t{ 6 });
-        auto system7 = System::create(funcs::multiple_queries_and_resources, system_id_t{ 7 });
-        auto system8 = System::create(funcs::commands, system_id_t{ 8 });
-        auto system9 = System::create(funcs::comands_and_other, system_id_t{ 9 });
-        auto system10 = System::create(funcs::local, system_id_t{ 10 });
-        auto system11 = System::create(funcs::local_and_other, system_id_t{ 11 });
-        auto system12 = System::create(funcs::event_reader, system_id_t{ 12 });
+        auto system1 = System::create(funcs::only_query);
+        auto system2 = System::create(funcs::only_resource);
+        auto system3 = System::create(funcs::query_and_resources);
+        auto system4 = System::create(funcs::query_group);
+        auto system5 = System::create(funcs::multiple_queries);
+        auto system6 = System::create(funcs::multiple_resources);
+        auto system7 = System::create(funcs::multiple_queries_and_resources);
+        auto system8 = System::create(funcs::commands);
+        auto system9 = System::create(funcs::comands_and_other);
+        auto system10 = System::create(funcs::local);
+        auto system11 = System::create(funcs::local_and_other);
+        auto system12 = System::create(funcs::event_reader);
     };
 
     "[Create Systems: Lambda]"_test = [] {
         auto func = [](Query<With<int>>, Resource<char>) {};
-        auto system = System::create(func, system_id_t{ 1 });
+        auto system = System::create(func);
     };
 
     "[Execute System: Local Resource]"_test = [] {
@@ -55,11 +55,13 @@ void system_test()
         auto w = World{};
 
         auto increment_local = [](Local<int> l) { ++(*l); };
-        auto system1 = System::create(increment_local, system_id_t{ 1 });
-        auto system2 = System::create(increment_local, system_id_t{ 2 });
+        auto increment_local2 = [](Local<int> l) { ++(*l); };
 
-        auto const local1 = r.local().set_local_resource<int>(system_id_t{ 1 }, 0);
-        auto const local2 = r.local().set_local_resource<int>(system_id_t{ 2 }, 99);
+        auto system1 = System::create(increment_local);
+        auto system2 = System::create(increment_local2);
+
+        auto const local1 = r.local().set_local_resource<int>(system1.id(), 0);
+        auto const local2 = r.local().set_local_resource<int>(system2.id(), 99);
 
         expect(*local1 == 0);
         expect(*local2 == 99);
@@ -79,105 +81,41 @@ void system_test()
 
         auto w = World{};
 
-        auto system1 = System::create(execute::only_query, system_id_t{ 1 });
-        auto system2 = System::create(execute::only_resource, system_id_t{ 2 });
-        auto system3 = System::create(execute::query_resource, system_id_t{ 3 });
+        auto system1 = System::create(system_test_execute::only_query);
+        auto system2 = System::create(system_test_execute::only_resource);
+        auto system3 = System::create(system_test_execute::query_resource);
 
         should("execute system with only query") = [&] {
-            execute::global_count = 0;
+            system_test_execute::global_count = 0;
             system1.run(r, w);
-            expect(execute::global_count == 1);
+            expect(system_test_execute::global_count == 1);
         };
 
         should("lacking resource sholud not execute sytem") = [&] {
-            execute::global_count = 0;
+            system_test_execute::global_count = 0;
             system2.run(r, w);
             system3.run(r, w);
-            expect(execute::global_count == 0);
+            expect(system_test_execute::global_count == 0);
         };
 
         // add required resource
         r.set_resource<int>(32);
 
         should("systems with resources should execute") = [&] {
-            execute::global_count = 0;
+            system_test_execute::global_count = 0;
             system1.run(r, w);
             system2.run(r, w);
             system3.run(r, w);
-            expect(execute::global_count == 3);
+            expect(system_test_execute::global_count == 3);
         };
 
         // remove resource
         r.remove_resource<int>();
         should("after removing resource, should not execute sytem") = [&] {
-            execute::global_count = 0;
+            system_test_execute::global_count = 0;
             system2.run(r, w);
             system3.run(r, w);
-            expect(execute::global_count == 0);
-        };
-    };
-
-    "[System Scheduler]"_test = [] {
-        auto r = Resources{};
-        r.set_resource<int>(42);
-        auto w = World{};
-
-        auto scheduler = Scheduler{};
-
-        auto const id1 = scheduler.add_system(execute::only_query);
-        auto const id2 = scheduler.add_system(execute::only_resource);
-        auto const id3 = scheduler.add_system(execute::query_resource);
-
-        should("have run systems") = [&] {
-            execute::global_count = 0;
-            scheduler.run_systems(r, w);
-            expect(execute::global_count == 3);
-        };
-
-        expect(scheduler.remove_system(id1) == true);
-        expect(scheduler.remove_system(id2) == true);
-
-        should("unable to delete an invaild system `id`") = [&] {
-            expect(scheduler.remove_system(id1) == false);
-            expect(scheduler.remove_system(id2) == false);
-        };
-
-        should("run single remaining system") = [&] {
-            execute::global_count = 0;
-            scheduler.run_systems(r, w);
-            expect(execute::global_count == 1);
-        };
-
-        expect(scheduler.remove_system(id3) == true);
-        should("run nothing: no remaining system") = [&] {
-            execute::global_count = 0;
-            scheduler.run_systems(r, w);
-            expect(execute::global_count == 0);
-        };
-    };
-
-    "[System Scheduler: Validate Resources]"_test = [] {
-        auto r = Resources{};
-        r.set_resource<int>(0);
-        auto w = World{};
-        auto scheduler = Scheduler{};
-
-        auto res = r.get_resource<int const>();
-        auto increment_resource = [](Resource<int> res) {
-            ++(*res);
-        };
-
-        should("add system") = [&] {
-            scheduler.add_system(increment_resource);
-            scheduler.run_systems(r, w);
-            expect(**res == 1);
-        };
-
-        should("add additional systems") = [&] {
-            scheduler.add_system(increment_resource);
-            scheduler.add_system(increment_resource);
-            scheduler.run_systems(r, w);
-            expect(**res == 4);
+            expect(system_test_execute::global_count == 0);
         };
     };
 
@@ -185,6 +123,9 @@ void system_test()
         auto r = Resources{};
         auto w = World{};
         auto scheduler = Scheduler{};
+
+        struct StageT {};
+        scheduler.add_stage<StageT>();
     
         auto add_entity_and_resource = [](Commands cmds) {
             auto e = cmds.spawn();
@@ -192,8 +133,8 @@ void system_test()
             cmds.set_resource<int>(42);
         };
 
-        auto system = scheduler.add_system(add_entity_and_resource);
-        scheduler.run_systems(r, w);
+        auto system = scheduler.add_system_to_stage<StageT>(add_entity_and_resource);
+        scheduler.run_stages(r, w);
 
         expect(w.size() == 1);
         expect(w.view<int>().size() == 1);

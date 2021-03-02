@@ -9,6 +9,25 @@
 #include "resource.hpp"
 #include "world.hpp"
 
+class SystemSettings 
+{
+    SystemId m_id{};
+    bool m_should_run = true;
+
+public:
+    constexpr SystemSettings(SystemId const id, bool const should_run) noexcept
+        : m_id(id)
+        , m_should_run(should_run)
+    {}
+
+    constexpr SystemSettings(SystemSettings&&) noexcept = default;
+    constexpr SystemSettings& operator=(SystemSettings&&) noexcept = default;
+
+    constexpr auto id() const noexcept -> SystemId { return m_id; }
+    constexpr auto should_run() const noexcept -> bool { return m_should_run; }
+    constexpr void set_should_run(bool const b) noexcept { m_should_run = b; }
+};
+
 namespace internal {
 
     // check if a type is a `tl::optional`
@@ -78,7 +97,7 @@ namespace internal {
     struct get_system_arg_impl<Query<With<Ws...>, Without<WOs...>, VG>>
     {
         using query_t = Query<With<Ws...>, Without<WOs...>, VG>;
-        auto operator()(system_id_t, Resources&, World& world) const -> decltype(auto)
+        auto operator()(SystemSettings const&, Resources&, World& world) const -> decltype(auto)
         {
             if constexpr (std::is_same_v<VG, View>) {
                 return query_t{ world.view<Ws...>(entt::exclude<WOs...>) };
@@ -95,7 +114,7 @@ namespace internal {
     template <typename R>
     struct get_system_arg_impl<Resource<R>>
     {
-        auto operator()(system_id_t, Resources& res, World&) const -> decltype(auto)
+        auto operator()(SystemSettings const&, Resources& res, World&) const -> decltype(auto)
         {
             return res.get_resource<R>();
         }
@@ -104,16 +123,25 @@ namespace internal {
     template <typename L>
     struct get_system_arg_impl<Local<L>>
     {
-        auto operator()(system_id_t const id, Resources& res, World&) const -> decltype(auto)
+        auto operator()(SystemSettings const& settings, Resources& res, World&) const -> decltype(auto)
         {
-            return res.local().get_local_resource<L>(id);
+            return res.local().get_local_resource<L>(settings.id());
+        }
+    };
+
+    template <>
+    struct get_system_arg_impl<SystemSettings>
+    {
+        constexpr auto operator()(SystemSettings& settings, Resources&, World&) const -> decltype(auto)
+        {
+            return settings;
         }
     };
 
     template <>
     struct get_system_arg_impl<Commands>
     {
-        constexpr auto operator()(system_id_t, Resources& res, World& w) const -> Commands
+        constexpr auto operator()(SystemSettings const&, Resources& res, World& w) const -> Commands
         {
             return Commands{ res, w };
         }
@@ -122,32 +150,32 @@ namespace internal {
     template <typename T>
     struct get_system_arg_impl<EventReader<T>>
     {
-        auto operator()(system_id_t const id, Resources& res, World&) const -> EventReader<T>
+        auto operator()(SystemSettings const& settings, Resources& res, World&) const -> EventReader<T>
         {
             auto events = res.get_resource<Events<T> const>();
             DEBUG_ASSERT(events.has_value());
 
             using count_t = typename EventReader<T>::EventCount;
-            auto const local = res.local().try_add_local_resource<count_t>(id, count_t{ 1 });
+            auto const local = res.local().try_add_local_resource<count_t>(settings.id(), count_t{ 1 });
             return EventReader<T>(local, *MOV(events));
         }
     };
 
     template <typename... Args>
-    auto get_system_args(system_id_t const id, Resources& res, World& world)
+    auto get_system_args(SystemSettings& settings, Resources& res, World& world)
     {
-        return std::make_tuple(get_system_arg_impl<Args>{}(id, res, world)...);
+        return std::make_tuple(get_system_arg_impl<Args>{}(settings, res, world)...);
     }
 
     // helper function that aggregate all the system arguments, check them, and then invoke the original function
     template <typename F, typename... Args>
-    void type_erased_system_impl(system_id_t const id, void* const data, Resources& res, World& world, meta::args<Args...>)
+    void type_erased_system_impl(SystemSettings& settings, void* const data, Resources& res, World& world, meta::args<Args...>)
     {
         static_assert(meta::all<valid_system_arg, std::remove_cvref_t<Args>...>, "System arguments can only be a `Query<>` or `Resource<>`");
         
         auto const func = static_cast<F*>(data);
 
-        auto args = get_system_args<std::remove_cvref_t<Args>...>(id, res, world);
+        auto args = get_system_args<std::remove_cvref_t<Args>...>(settings, res, world);
 
         bool const has_all_resouces = std::apply([](auto const&... xs) {
             return (if_optional_check_value(xs) && ...);
@@ -160,16 +188,16 @@ namespace internal {
 
     // type erased system function that reinterprets the function pointer to the original type
     template <typename F>
-    void type_erased_system(system_id_t const id, void* const data, Resources& resources, World& world)
+    void type_erased_system(SystemSettings& settings, void* const data, Resources& resources, World& world)
     {
         using Func = std::remove_cvref_t<F>;
         using func_traits = meta::function_traits<Func>;
         static_assert(std::is_same_v<void, typename func_traits::result_t>, "Systems must return `void`");
 
-        type_erased_system_impl<Func>(id, data, resources, world, typename func_traits::args_t{});
+        type_erased_system_impl<Func>(settings, data, resources, world, typename func_traits::args_t{});
     }
 
-    using type_erased_system_t = void(*)(system_id_t, void*, Resources&, World&);
+    using type_erased_system_t = void(*)(SystemSettings&, void*, Resources&, World&);
 
 } // namespace internal
 
@@ -179,33 +207,33 @@ class System
 
     run_func_t m_run_func;
     void* m_data = nullptr;
-    system_id_t m_id;
+    SystemSettings m_settings;
 
-    constexpr System(run_func_t const run_func, void* const data, system_id_t const id) noexcept 
+    constexpr System(run_func_t const run_func, void* const data, SystemId const id) noexcept
         : m_run_func(run_func)
         , m_data(data)
-        , m_id(id)
-    {
-    }
+        , m_settings(id, true)
+    {}
 
 public:
     constexpr System(System&&) noexcept = default;
-    constexpr System(System const&) noexcept = default;
     constexpr System& operator=(System&&) noexcept = default;
-    constexpr System& operator=(System const&) noexcept = default;
 
     template <typename F>
     requires (!std::is_rvalue_reference_v<F>)
-    static constexpr auto create(F&& f, system_id_t const id) -> System
+    static constexpr auto create(F&& f) -> System
     {
+        auto const id = SystemId::create<F>();
         auto const run_func = internal::type_erased_system<F>;
         return System(run_func, std::addressof(f), id);
     }
 
     constexpr void run(Resources& resources, World& world)
     {
-        m_run_func(m_id, m_data, resources, world);
+        m_run_func(m_settings, m_data, resources, world);
     }
 
-    constexpr auto id() const noexcept -> system_id_t { return m_id; }
+    constexpr auto id() const noexcept -> SystemId { return m_settings.id(); }
+
+    constexpr auto should_run() const noexcept -> bool { return m_settings.should_run(); }
 };

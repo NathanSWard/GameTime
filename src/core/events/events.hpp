@@ -95,7 +95,7 @@ class ManualEventReader
     std::size_t m_last_event_count = 0;
 
 public:
-    constexpr ManualEventReader(std::size_t const last_event_count) noexcept
+    constexpr ManualEventReader(std::size_t const last_event_count = 0) noexcept
         : m_last_event_count(last_event_count)
     {}
 

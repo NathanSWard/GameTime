@@ -73,15 +73,15 @@ void resource_test()
             expect(!rm.get_resource<int>().has_value());
         };
 
-        constexpr system_id_t id1 = 1;
-        constexpr system_id_t id2 = 2;
+        SystemId const id1 = SystemId::create<int>();
+        SystemId const id2 = SystemId::create<float>();
 
         should("not conatins local resources") = [&] {
             expect(!rm.local().contains_local_resource<int>(id1));
             expect(rm.local().remove_local_resource<int>(id1) == nullptr);
         };
 
-        should("add local resources") = [&rm] {
+        should("add local resources") = [&] {
             rm.local().set_local_resource<int>(id1, 42);
             rm.local().set_local_resource<char>(id2, 'a');
 
@@ -116,7 +116,7 @@ void resource_test()
             };
         };
 
-        should("remove local resources") = [&rm] {
+        should("remove local resources") = [&] {
             expect(rm.local().remove_local_resource<int>(id1) != nullptr);
             expect(!rm.local().contains_local_resource<int>(id1));
             expect(!rm.local().get_local_resource<int>(id1).has_value());

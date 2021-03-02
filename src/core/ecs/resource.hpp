@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <numeric>
 #include <unordered_map>
@@ -7,7 +8,34 @@
 #include "util/type_map.hpp"
 #include "util/common.hpp"
 
-using system_id_t = std::size_t;
+struct SystemId 
+{ 
+    type_id_t id{};
+
+    template <typename T>
+    constexpr static auto create() noexcept -> SystemId
+    {
+        return SystemId{ .id = type_id<std::remove_cvref_t<T>>() };
+    }
+
+    constexpr auto operator==(SystemId const& rhs) const noexcept -> bool
+    {
+        return id == rhs.id;
+    }
+    constexpr auto operator!=(SystemId const& rhs) const noexcept -> bool
+    {
+        return !(*this == rhs);
+    }
+};
+
+template <>
+struct std::hash<SystemId>
+{
+    auto operator()(SystemId const& id) const noexcept -> std::size_t
+    {
+        return static_cast<std::size_t>(id.id);
+    }
+};
 
 template <typename T, typename Tag>
 struct ResourceBase
@@ -88,11 +116,11 @@ constexpr auto make_const_local_resource(T const& value) -> Local<T const>
 
 class LocalResources
 {
-    std::unordered_map<system_id_t, TypeMap> m_local_resources;
+    std::unordered_map<SystemId, TypeMap> m_local_resources;
 
 public:
     template <typename T, typename... Args>
-    auto try_add_local_resource(system_id_t const id, Args&&... args) -> Local<T>
+    auto try_add_local_resource(SystemId const id, Args&&... args) -> Local<T>
     {
         auto [iter, ok] = m_local_resources.try_emplace(id);
         UNUSED(ok);
@@ -102,7 +130,7 @@ public:
     }
 
     template <typename T, typename... Args>
-    auto set_local_resource(system_id_t const id, Args&&... args) -> Local<T>
+    auto set_local_resource(SystemId const id, Args&&... args) -> Local<T>
     {
         auto [iter, ok] = m_local_resources.try_emplace(id);
         UNUSED(ok);
@@ -112,7 +140,7 @@ public:
     }
 
     template <typename T>
-    auto remove_local_resource(system_id_t const id) -> std::unique_ptr<T>
+    auto remove_local_resource(SystemId const id) -> std::unique_ptr<T>
     {
         if (auto const iter = m_local_resources.find(id); iter != m_local_resources.end()) {
             auto ptr = iter->second.remove<T>();
@@ -125,7 +153,7 @@ public:
     }
 
     template <typename T>
-    [[nodiscard]] auto contains_local_resource(system_id_t const id) const -> bool
+    [[nodiscard]] auto contains_local_resource(SystemId const id) const -> bool
     {
         if (auto const iter = m_local_resources.find(id); iter != m_local_resources.end()) {
             return iter->second.contains<T>();
@@ -134,7 +162,7 @@ public:
     }
 
     template <typename T>
-    [[nodiscard]] auto get_local_resource(system_id_t const id) -> tl::optional<Local<T>>
+    [[nodiscard]] auto get_local_resource(SystemId const id) -> tl::optional<Local<T>>
     {
         if (auto const iter = m_local_resources.find(id); iter != m_local_resources.end()) {
             return iter->second.get<T>().map([](T& value) { return make_local_resource(value); });
@@ -143,7 +171,7 @@ public:
     }
 
     template <typename T>
-    [[nodiscard]] auto get_local_resource(system_id_t const id) const -> tl::optional<Local<T const>>
+    [[nodiscard]] auto get_local_resource(SystemId const id) const -> tl::optional<Local<T const>>
     {
         if (auto const iter = m_local_resources.find(id); iter != m_local_resources.end()) {
             return iter->second.get<T const>().map([](T const& value) { return make_const_local_resource(value); });
@@ -152,12 +180,12 @@ public:
     }
 
     template <typename T>
-    [[nodiscard]] auto cget_local_resource(system_id_t const id) const -> tl::optional<Local<T const>>
+    [[nodiscard]] auto cget_local_resource(SystemId const id) const -> tl::optional<Local<T const>>
     {
         return get_local_resource<T>();
     }
 
-    void clear_local_resources(system_id_t const id)
+    void clear_local_resources(SystemId const id)
     {
         m_local_resources.erase(id);
     }
@@ -167,7 +195,7 @@ public:
         m_local_resources.clear();
     }
 
-    [[nodiscard]] auto local_resource_count(system_id_t const id) const noexcept -> tl::optional<std::size_t>
+    [[nodiscard]] auto local_resource_count(SystemId const id) const noexcept -> tl::optional<std::size_t>
     {
         if (auto const iter = m_local_resources.find(id); iter != m_local_resources.end()) {
             return iter->second.size();

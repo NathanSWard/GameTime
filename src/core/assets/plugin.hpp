@@ -12,21 +12,26 @@ struct AssetServerSettings
 
 struct AssetPlugin
 {
-    void build(Game& game)
+    void build(GameBuilder& builder)
     {
-        if (!game.resources().get_resource<AssetServer>().has_value()) {
-            auto const settings = [&game] {
-                if (auto const settings = game.resources().get_resource<AssetServerSettings>(); settings) {
+        if (!builder.resources().get_resource<AssetServer>().has_value()) {
+            auto const settings = [&builder] {
+                if (auto const settings = builder.resources().get_resource<AssetServerSettings>(); settings) {
                     return *MOV(settings);
                 }
                 else {
-                    return game.resources().add_resource<AssetServerSettings>();
+                    return builder.resources().add_resource<AssetServerSettings>();
                 }
             }();
 
             auto asset_io = std::make_unique<FileAssetIo>(settings->asset_folder);
-            game.add_resource<AssetServer>(MOV(asset_io), TaskPool{});
-            game.prepare_components<UntypedHandle>();
+            builder
+                .add_resource<AssetServer>(MOV(asset_io), TaskPool{})
+                .prepare_components<UntypedHandle>();
         }
+
+        builder
+            .add_stage_before<AssetStage::LoadAssets, CoreStages::PreUpdate>();
+        // TODO: free_unused_assets_system
     }
 };

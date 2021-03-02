@@ -9,6 +9,8 @@ void handle_test();
 void input_test();
 void mouse_test();
 void resource_test();
+void runner_test();
+void scheduler_test();
 void system_test();
 
 void core_test()
@@ -22,5 +24,7 @@ void core_test()
     input_test();
     mouse_test();
     resource_test();
+    runner_test();
+    scheduler_test();
     system_test();
 }

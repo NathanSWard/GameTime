@@ -3,6 +3,9 @@
 #include <entt/entt.hpp>
 #include "sdl/sdl.hpp"
 
+#include <core/game.hpp>
+#include <core/input/plugin.hpp>
+
 int main(int, char**)
 {
 	auto const context = sdl::Context::create(SDL_INIT_VIDEO);
@@ -17,7 +20,8 @@ int main(int, char**)
 		return EXIT_FAILURE;
 	}
 
-	SDL_Delay(3000);
+	Game g;
+	g.add_plugin(InputPlugin{});
 
 	return 0;
 }

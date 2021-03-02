@@ -19,6 +19,14 @@
 #include "handle.hpp"
 #include "loader.hpp"
 
+namespace AssetStage {
+
+    struct LoadAssets {};
+    // TODO: struct AssetEvents {};
+
+} // AssetStage
+
+
 enum class LoadState
 {
     NotLoaded,
