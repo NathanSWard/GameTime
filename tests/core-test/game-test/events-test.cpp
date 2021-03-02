@@ -1,5 +1,5 @@
 #include <ut.hpp>
-#include <core/events/events.hpp>
+#include <core/game/events.hpp>
 
 using namespace boost::ut;
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <core/ecs/resource.hpp>
-#include <core/events/events.hpp>
+#include <core/game/events.hpp>
 #include <core/input/input.hpp>
 #include <core/math/vec.hpp>
 #include <functional>

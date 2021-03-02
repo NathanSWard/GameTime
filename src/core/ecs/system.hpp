@@ -1,7 +1,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include <core/events/events.hpp>
+#include <core/game/events.hpp>
 #include "commands.hpp"
 #include "util/meta.hpp"
 #include "util/common.hpp"

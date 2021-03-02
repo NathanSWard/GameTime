@@ -1,7 +1,7 @@
 #pragma once
 
 #include <core/assets/asset_server.hpp>
-#include <core/events/events.hpp>
+#include <core/game/events.hpp>
 #include <debug/debug.hpp>
 #include <core/ecs/resource.hpp>
 #include <core/ecs/world.hpp>
