@@ -1,27 +1,25 @@
-#include <ut.hpp>
 #include <core/game/events.hpp>
 
-using namespace boost::ut;
-
-template <typename T>
-auto get_events(Events<T> const& events, ManualEventReader<T>& reader)
+auto get_events(Events<int> const& events, ManualEventReader<int>& reader)
 {
-    std::vector<T> vec;
+    std::vector<int> vec;
     for (auto const& value : reader.iter(events)) {
         vec.push_back(value);
     }
     return vec;
 }
 
-template <typename T>
-auto get_events(EventReader<T>& reader)
+auto get_events(EventReader<int>& reader)
 {
-    std::vector<T> vec;
+    std::vector<int> vec;
     for (auto const& value : reader.iter()) {
         vec.push_back(value);
     }
     return vec;
 }
+
+#include <ut.hpp>
+using namespace boost::ut;
 
 void events_test()
 {
@@ -51,19 +49,20 @@ void events_test()
 
         expect(get_events(events, reader_c) == std::vector{ event0, event1 });
         expect(get_events(events, reader_c) == std::vector<int>{});
-
         expect(get_events(events, reader_a) == std::vector{ event1 });
-        expect(get_events(events, reader_b) == std::vector{ event1 });
 
         events.update();
 
-        should("after update, all events cleard") = [&] {
-            expect(get_events(events, reader_missed) == std::vector<int>{});
-        };
+        auto reader_d = events.get_reader();
 
-        // EventReader
-        {
+        events.send(event2);
 
-        }
+        expect(get_events(events, reader_a) == std::vector{ event2 });
+        expect(get_events(events, reader_b) == std::vector{ event1, event2 });
+        expect(get_events(events, reader_d) == std::vector{ event0, event1, event2 });
+
+        events.update(); 
+
+        expect(get_events(events, reader_missed) == std::vector{ event2 });
     };
 }

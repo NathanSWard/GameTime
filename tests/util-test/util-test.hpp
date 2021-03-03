@@ -1,5 +1,6 @@
 #pragma once
 
+void chain_test();
 void mutex_test();
 void rwlock_test();
 void common_test();
@@ -11,6 +12,7 @@ void rc_test();
 
 void util_test()
 {
+    chain_test();
     mutex_test();
     rwlock_test();
     common_test();

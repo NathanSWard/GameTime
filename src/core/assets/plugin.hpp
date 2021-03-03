@@ -2,7 +2,7 @@
 
 #include <core/assets/asset_server.hpp>
 #include <core/assets/asset_io/asset_io_impl.hpp>
-#include <core/game.hpp>
+#include <core/game/game.hpp>
 #include <core/task/task_pool.hpp>
 
 struct AssetServerSettings
@@ -20,13 +20,13 @@ struct AssetPlugin
                     return *MOV(settings);
                 }
                 else {
-                    return builder.resources().add_resource<AssetServerSettings>();
+                    return builder.resources().try_add_resource<AssetServerSettings>();
                 }
             }();
 
             auto asset_io = std::make_unique<FileAssetIo>(settings->asset_folder);
             builder
-                .add_resource<AssetServer>(MOV(asset_io), TaskPool{})
+                .set_resource<AssetServer>(MOV(asset_io), TaskPool{})
                 .prepare_components<UntypedHandle>();
         }
 

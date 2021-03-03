@@ -1,12 +1,12 @@
 #pragma once
 
+#include <sdl/sdl.hpp>
 #include <core/game/events.hpp>
 #include <core/game/game.hpp>
 #include <core/input/input.hpp>
 #include <core/input/keyboard.hpp>
 #include <core/input/mouse.hpp>
 #include <core/window/event.hpp>
-#include <SDL2/SDL.h>
 
 void sdl_handle_quit_event(
     Events<GameExit>& exit_events,
@@ -86,7 +86,7 @@ void sdl_handle_keyboard_event(
     // TODO
 }
 
-void sdl_input_system(
+void sdl_event_system(
     Resource<Events<GameExit>> game_exit_events,
     Resource<Events<MouseMotion>> mouse_motion_events,
     Resource<Events<CursorMoved>> cursor_moved_events,

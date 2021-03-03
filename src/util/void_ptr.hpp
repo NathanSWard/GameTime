@@ -6,15 +6,10 @@
 namespace {
 
     template <typename T>
-    requires (!std::is_trivially_destructible_v<T>)
-        constexpr void invoke_destructor(void* const ptr)
+    constexpr void invoke_destructor(void* const ptr)
     {
-        static_cast<T*>(ptr)->~T();
+        delete static_cast<T*>(ptr);
     }
-
-    template <typename T>
-    requires (std::is_trivially_destructible_v<T>)
-        constexpr void invoke_destructor(void* const) {}
 
 } // namespace
 

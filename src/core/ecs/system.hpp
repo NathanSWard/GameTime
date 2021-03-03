@@ -97,7 +97,7 @@ namespace internal {
     struct get_system_arg_impl<Query<With<Ws...>, Without<WOs...>, VG>>
     {
         using query_t = Query<With<Ws...>, Without<WOs...>, VG>;
-        auto operator()(SystemSettings const&, Resources&, World& world) const -> decltype(auto)
+        auto operator()(SystemSettings const&, Resources&, World& world) const
         {
             if constexpr (std::is_same_v<VG, View>) {
                 return query_t{ world.view<Ws...>(entt::exclude<WOs...>) };
@@ -114,7 +114,7 @@ namespace internal {
     template <typename R>
     struct get_system_arg_impl<Resource<R>>
     {
-        auto operator()(SystemSettings const&, Resources& res, World&) const -> decltype(auto)
+        auto operator()(SystemSettings const&, Resources& res, World&) const
         {
             return res.get_resource<R>();
         }
@@ -123,7 +123,7 @@ namespace internal {
     template <typename L>
     struct get_system_arg_impl<Local<L>>
     {
-        auto operator()(SystemSettings const& settings, Resources& res, World&) const -> decltype(auto)
+        auto operator()(SystemSettings const& settings, Resources& res, World&) const
         {
             return res.local().get_local_resource<L>(settings.id());
         }
@@ -134,7 +134,7 @@ namespace internal {
     {
         constexpr auto operator()(SystemSettings& settings, Resources&, World&) const -> decltype(auto)
         {
-            return settings;
+            return std::ref(settings);
         }
     };
 

@@ -3,13 +3,14 @@
 #include <debug/debug.hpp>
 #include <core/ecs/resource.hpp>
 #include <util/common.hpp>
+#include <util/ranges/chain.hpp>
 #include <ranges>
 #include <vector>
 
 template <typename T>
 struct EventId 
 {
-    std::uint64_t id = 0;
+    std::size_t id = 0;
 };
 
 template <typename T>
@@ -45,17 +46,44 @@ namespace {
     }
 }
 
-// TODO: possible double buffering
+namespace {
+
+    enum class State
+    {
+        A, B,
+    };
+
+} // namespace
+
 template <typename T>
 class Events
 {
-    std::vector<Event<T>> m_events;
+    std::vector<Event<T>> m_a_events;
+    std::vector<Event<T>> m_b_events;
+    std::size_t m_a_start_event_count = 0;
+    std::size_t m_b_start_event_count = 0;
+    std::size_t m_event_count = 0;
+    State m_state = State::A;
 
-    auto internal_event_reader(std::size_t& last_event_count) const noexcept
+    template <typename F>
+    auto internal_event_reader(std::size_t& last_event_count, F&& f) const noexcept
     {
-        auto view = m_events | std::views::drop(last_event_count) | std::views::transform(map_instance_event_with_id<T>);
-        last_event_count = m_events.size();
-        return view;
+        std::size_t const a_index = last_event_count > m_a_start_event_count ? 
+            last_event_count - m_a_start_event_count : 0;
+        std::size_t const b_index = last_event_count > m_b_start_event_count ?
+            last_event_count - m_b_start_event_count : 0;
+
+        last_event_count = m_event_count;
+
+        auto a_view = m_a_events | std::views::drop(a_index) | std::views::transform(f);
+        auto b_view = m_b_events | std::views::drop(b_index) | std::views::transform(f);
+
+        switch (m_state) {
+            case State::A:
+                return chain(b_view, a_view);
+            default: // State::B
+                return chain(a_view, b_view);
+        }
     }
 
     template <typename>
@@ -64,12 +92,23 @@ class Events
     friend class EventReader;
 
 public:
-
     template <typename... Args>
     void send(Args&&... args)
     {
-        auto const id = EventId<T>{static_cast<std::uint64_t>(m_events.size())};
-        m_events.emplace_back(id, FWD(args)...);
+        auto const id = EventId<T>{ .id = m_event_count };
+
+        switch (m_state) {
+            case State::A: 
+                m_a_events.emplace_back(id, FWD(args)...);
+                break;
+            case State::B: 
+                m_b_events.emplace_back(id, FWD(args)...);
+                break;
+            default: // unreachable
+                break;
+        }
+
+        ++m_event_count;
     }
 
     // includes all events already in the event buffers.
@@ -78,9 +117,31 @@ public:
     // ignores all events already in the event buffer.
     constexpr auto get_reader_current() const noexcept -> ManualEventReader<T>;
 
-    void update() { m_events.clear(); }
+    void update() 
+    { 
+        switch (m_state) {
+            case State::A: {
+                std::vector<Event<T>>().swap(m_b_events);
+                m_state = State::B;
+                m_b_start_event_count = m_event_count;
+            }
+                break;
+            case State::B: {
+                std::vector<Event<T>>().swap(m_a_events);
+                m_state = State::A;
+                m_a_start_event_count = m_event_count;
+            }
+                break;
+            default: // unreachable
+                break;
+        }
+    }
 
-    void clear() { m_events.clear(); }
+    void clear() 
+    { 
+        m_a_events.clear();
+        m_b_events.clear();
+    }
 };
 
 template <typename T>
@@ -106,14 +167,13 @@ public:
 
     auto iter_with_id(Events<T> const& events) noexcept
     {
-        return events.internal_event_reader(m_last_event_count);
+        return events.internal_event_reader(m_last_event_count, map_instance_event_with_id<T>);
     }
 
     auto iter(Events<T> const& events) noexcept
     {
-        return iter_with_id(events) | std::views::transform([](auto const& e) -> T const& { return std::get<1>(e); });
+        return events.internal_event_reader(m_last_event_count, map_instance_event<T>);
     }
-
 };
 
 template <typename T>
@@ -140,12 +200,12 @@ public:
 
     auto iter_with_id() noexcept
     {
-        return m_events->internal_event_reader(m_last_event_count->count);
+        return m_events->internal_event_reader(m_last_event_count->count, map_instance_event_with_id<T>);
     }
 
     auto iter() noexcept
     {
-        return iter_with_id() | std::views::transform([](auto const& e) -> T const& { return std::get<1>(e); });
+        return m_events->internal_event_reader(m_last_event_count->count, map_instance_event<T>);
     }
 };
 
@@ -158,5 +218,5 @@ constexpr auto Events<T>::get_reader() const noexcept -> ManualEventReader<T>
 template <typename T>
 constexpr auto Events<T>::get_reader_current() const noexcept -> ManualEventReader<T>
 {
-    return ManualEventReader<T>{m_events.size()};
+    return ManualEventReader<T>{ m_event_count };
 }

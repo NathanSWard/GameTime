@@ -2,9 +2,7 @@
 
 #include <array>
 #include <core/assets/loader.hpp>
-#include "sdl.hpp"
-
-#include <iostream>
+#include <sdl/sdl.hpp>
 
 struct SDL_IMG_Loader final : public AssetLoader
 {
@@ -18,10 +16,6 @@ struct SDL_IMG_Loader final : public AssetLoader
     auto load(std::string_view, std::span<std::byte const> const bytes) const -> tl::optional<LoadedAsset>
     {
         auto* const surface = IMG_Load_RW(SDL_RWFromMem(const_cast<std::byte*>(bytes.data()), static_cast<int>(bytes.size())), 1);
-        if (surface == nullptr) {
-            std::cout << "Error: " << IMG_GetError() << '\n';
-            return {};
-        }
         return LoadedAsset::create<sdl::Surface>(sdl::Surface::from_raw(surface));
     }
 };

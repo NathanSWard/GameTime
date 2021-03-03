@@ -48,7 +48,7 @@
 #endif // __cpp_lib_source_location >= 201907L
 
 template <typename... Args>
-auto args(Args&&... args)
+auto panic_args(Args&&... args)
 {
     return std::forward_as_tuple(FWD(args)...);
 }
@@ -56,7 +56,7 @@ auto args(Args&&... args)
 template <typename Tpl = std::tuple<>>
 [[noreturn]] void panic(
     std::string_view const fmt = "explicit panic", 
-    Tpl args = std::tuple<>{}, // use args() to pass the arguments
+    Tpl args = std::tuple<>{}, // use panic_args() to pass the arguments
     source_location const& loc = source_location::current())
 {
     auto const message = std::apply([fmt](auto&&... args) {
