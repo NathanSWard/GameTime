@@ -6,7 +6,7 @@
 namespace {
 
     template <typename T>
-    constexpr void invoke_destructor(void* const ptr)
+    constexpr void delete_data(void* const ptr)
     {
         delete static_cast<T*>(ptr);
     }
@@ -18,12 +18,6 @@ class void_ptr {
     void* m_data = nullptr;
     deleter_t m_deleter = nullptr;
 
-    constexpr void_ptr(void* const data, deleter_t const deleter) noexcept
-        : m_data(data)
-        , m_deleter(deleter)
-    {
-    }
-
     constexpr void destory()
     {
         if (m_data) {
@@ -33,10 +27,15 @@ class void_ptr {
 
 public:
     template <typename T, typename... Args>
+    constexpr void_ptr(in_place_type_t<T>, Args&&... args)
+        : m_data(new T(FWD(args)...))
+        , m_deleter(delete_data<T>)
+    {}
+
+    template <typename T, typename... Args>
     static constexpr auto create(Args&&... args) noexcept -> void_ptr
     {
-        T* ptr = new T(FWD(args)...);
-        return void_ptr(static_cast<void*>(ptr), invoke_destructor<T>);
+        return void_ptr(in_place_type<T>, FWD(args)...);
     }
 
     constexpr void* take() noexcept

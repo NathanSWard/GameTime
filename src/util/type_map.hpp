@@ -31,7 +31,7 @@ public:
     template <typename T, typename... Args>
     auto try_add(Args&&... args) -> T&
     {
-        auto const [iter, ok] = m_map.try_emplace(type_id<T>(), void_ptr::create<T>(FWD(args)...));
+        auto const [iter, ok] = m_map.try_emplace(type_id<T>(), in_place_type<T>, FWD(args)...);
         UNUSED(ok);
         return *static_cast<T*>(iter->second.data());
     }

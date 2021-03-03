@@ -19,6 +19,12 @@ constexpr auto type_id() noexcept -> type_id_t
 struct in_place_t {};
 inline constexpr in_place_t in_place{};
 
+template <typename T>
+struct in_place_type_t {};
+
+template <typename T>
+inline constexpr in_place_type_t<T> in_place_type{};
+
 namespace hash {
 
     struct string_hash
