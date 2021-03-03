@@ -1,6 +1,5 @@
 #pragma once
 
-#include <bit>
 #include <concepts>
 #include <limits>
 #include <random>
@@ -53,26 +52,11 @@ namespace util {
         }
     } // namespace
 
-    template <std::integral I>
-    I fast_rand() noexcept
+    template <typename T>
+    requires (std::is_arithmetic_v<T>)
+    T fast_rand() noexcept
     {
-        return static_cast<I>(fast_rand_impl());
-    }
-
-    template <std::floating_point F>
-    F fast_rand() noexcept
-    {
-        if constexpr (sizeof(F) == sizeof(std::uint32_t)) {
-            std::uint32_t const x = static_cast<std::uint32_t>(fast_rand_impl());
-            return std::bit_cast<F>(x);
-        }
-        else if (sizeof(F) == sizeof(std::uint64_t)) {
-            std::uint64_t const x = fast_rand_impl();
-            return std::bit_cast<F>(x);
-        }
-        else {
-            return static_cast<F>(fast_rand_impl());
-        }
+        return static_cast<T>(fast_rand_impl());
     }
 
 } // namespace util
