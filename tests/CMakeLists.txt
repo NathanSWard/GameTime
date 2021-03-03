@@ -19,6 +19,7 @@ set(TEST_SOURCES
 	"core-test/assets-test/asset_server-test.cpp"
 	"core-test/assets-test/asset_io-test/asset_io_impl-test.cpp"
 	"sdl-test/sdl_img_loader-test.cpp"
+	"sdl-test/sdl_event-test.cpp"
 	"core-test/game-test/events-test.cpp"
 	"core-test/input-test/input-test.cpp"
 	"core-test/input-test/mouse-test.cpp"
@@ -35,6 +36,9 @@ find_package(SDL2 CONFIG REQUIRED)
 find_package(SDL2-image CONFIG REQUIRED)
 target_link_libraries(${TEST_EXE} PRIVATE SDL2::SDL2)
 target_link_libraries(${TEST_EXE} PRIVATE SDL2::SDL2_image)
+
+find_package(fmt CONFIG REQUIRED)
+target_link_libraries(${TEST_EXE} PRIVATE fmt::fmt)
 
 # copy assets folder
 file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/assets")

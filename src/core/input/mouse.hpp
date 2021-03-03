@@ -68,6 +68,7 @@ struct MouseButtonInput
 {
     MouseButton button;
     ElementState state;
+    std::uint8_t clicks = 1;
 };
 
 struct MouseMotion
@@ -75,15 +76,8 @@ struct MouseMotion
     Vec2 delta;
 };
 
-enum class MouseScrollUnit : bool
-{
-    Line,
-    Pixel,
-};
-
 struct MouseWheel
 {
-    MouseScrollUnit unit = MouseScrollUnit::Line;
     float x = 0.f;
     float y = 0.f;
 };
