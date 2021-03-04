@@ -72,12 +72,15 @@ public:
 };
 
 template <>
-class Assets<Texture> : AssetsBase<Texture>
+class Assets<Texture> : public AssetsBase<Texture>
 {
-    std::unordered_map<HandleId, Texture> m_surfaces;
+    using vec_t = std::vector<std::pair<HandleId, Texture>>;
+    vec_t m_surfaces;
     friend void sdl_surface_to_texture_system(Assets<Texture>&, Resource<RenderContext>);
 
 public:
+    auto unready_texture_size() const noexcept -> std::size_t { return m_surfaces.size(); }
+
     template <typename... Args>
     auto add_asset(Args&&... args) -> Handle<Texture>
     {
@@ -88,7 +91,9 @@ public:
             this->m_assets.insert_or_assign(id, MOV(texture));
         }
         else {
-            m_surfaces.insert_or_assign(id, MOV(texture));
+            m_surfaces.emplace_back(std::piecewise_construct,
+                std::forward_as_tuple(id),
+                std::forward_as_tuple(MOV(texture)));
         }
 
         return Handle<Texture>{ id };
@@ -100,21 +105,25 @@ public:
         auto const id = handle.id();
         auto texture = Texture(FWD(args)...);
 
-        if (auto const sfound = m_surfaces.find(id); sfound != m_surfaces.end()) {
+        if (auto const tfound = m_assets.find(id); tfound != m_assets.end()) {
+            if (texture.m_is_texture) {
+                tfound->second = MOV(texture);
+            }
+            else {
+                m_assets.erase(tfound);
+                m_surfaces.emplace_back(std::piecewise_construct, 
+                    std::forward_as_tuple(id), 
+                    std::forward_as_tuple(MOV(texture)));
+            }
+        }
+        else if (auto const sfound = std::ranges::find(m_surfaces, id, [](auto const& data) -> HandleId const& { return data.first; })
+            ; sfound != m_surfaces.end()) {
             if (texture.m_is_texture) {
                 m_surfaces.erase(sfound);
                 m_assets.insert_or_assign(id, MOV(texture));
-            } 
-            else {
-                *sfound = MOV(texture);
-            }
-        }
-        else if (auto const tfound = m_assets.find(id); tfound != m_assets.end()) {
-            if (texture.m_is_texture) {
-                *tfound = MOV(texture);
             }
             else {
-                m_surfaces.insert_or_assign(id, MOV(texture));
+                sfound->second = MOV(texture);
             }
         }
         else {
@@ -122,7 +131,9 @@ public:
                 m_assets.insert_or_assign(id, MOV(texture));
             }
             else {
-                m_surfaces.insert_or_assign(id, MOV(texture));
+                m_surfaces.emplace_back(std::piecewise_construct,
+                    std::forward_as_tuple(id),
+                    std::forward_as_tuple(MOV(texture)));
             }
         }
 
@@ -150,5 +161,6 @@ void sdl_surface_to_texture_system(Assets<Texture>& assets, Resource<RenderConte
         assets.m_assets.insert_or_assign(MOV(id), MOV(asset));
     }
 
-    assets.m_surfaces.clear();
+    using vec_t = typename Assets<Texture>::vec_t;
+    vec_t().swap(assets.m_surfaces);
 }

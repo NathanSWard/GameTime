@@ -76,7 +76,19 @@ namespace sdl {
 
     public:
         Window(Window const&) = delete;
-        constexpr Window(Window&& other) noexcept : m_window(std::exchange(other.m_window, nullptr)) {}
+        Window& operator=(Window const&) = delete;
+
+        constexpr Window(Window&& other) noexcept 
+            : m_window(std::exchange(other.m_window, nullptr)) 
+        {}
+
+        Window& operator=(Window&& other) noexcept
+        {
+            if (m_window) {
+                SDL_DestroyWindow(m_window);
+            }
+            m_window = std::exchange(other.m_window, nullptr);
+        }
 
         static auto create(char const* const title, int const x, int const y, int const w, int const h, std::uint32_t const flags) -> tl::expected<Window, Error> {
             auto const window = SDL_CreateWindow(title, x, y, w, h, flags);
@@ -101,7 +113,19 @@ namespace sdl {
 
     public:
         Renderer(Renderer const&) = delete;
-        constexpr Renderer(Renderer&& other) noexcept : m_renderer(std::exchange(other.m_renderer, nullptr)) {}
+        Renderer& operator=(Renderer const&) = delete;
+
+        constexpr Renderer(Renderer&& other) noexcept 
+            : m_renderer(std::exchange(other.m_renderer, nullptr)) 
+        {}
+
+        Renderer& operator=(Renderer&& other) noexcept 
+        {
+            if (m_renderer) {
+                SDL_DestroyRenderer(m_renderer);
+            }
+            m_renderer = std::exchange(other.m_renderer, nullptr);
+        }
 
         static auto create(Window& window, int const index, std::uint32_t const flags) -> tl::expected<Renderer, Error> {
             auto const renderer = SDL_CreateRenderer(window.raw(), index, flags);
