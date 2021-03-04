@@ -24,6 +24,7 @@ set(TEST_SOURCES
 	"core-test/input-test/input-test.cpp"
 	"core-test/input-test/mouse-test.cpp"
 	"util-test/ranges-test/chain-test.cpp"
+	"core-test/render-test/texture-test.cpp"
 	)
 
 include_directories(ut)

@@ -7,18 +7,19 @@
 #include <util/common.hpp>
 
 template <typename T>
-class Assets 
+class AssetsBase
 {
+protected:
     std::unordered_map<HandleId, T> m_assets;
 
 public:
-    Assets() noexcept = default;
+    AssetsBase() noexcept = default;
 
-    Assets(Assets&&) noexcept = default;
-    Assets& operator=(Assets&&) noexcept = default;
+    AssetsBase(AssetsBase&&) noexcept = default;
+    AssetsBase& operator=(AssetsBase&&) noexcept = default;
 
-    Assets(Assets const&) = delete;
-    Assets& operator=(Assets const&) = delete;
+    AssetsBase(AssetsBase const&) = delete;
+    AssetsBase& operator=(AssetsBase const&) = delete;
 
     template <typename... Args>
     auto add_asset(Args&&... args) -> Handle<T>
@@ -88,3 +89,6 @@ public:
     [[nodiscard]] auto size() const noexcept -> std::size_t { return m_assets.size(); }
     [[nodiscard]] auto empty() const noexcept -> bool { return m_assets.empty(); }
 };
+
+template <typename T>
+class Assets : public AssetsBase<T> {};

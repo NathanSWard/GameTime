@@ -12,6 +12,7 @@ void resource_test();
 void runner_test();
 void scheduler_test();
 void system_test();
+void texture_test();
 
 void core_test()
 {
@@ -27,4 +28,5 @@ void core_test()
     runner_test();
     scheduler_test();
     system_test();
+    texture_test();
 }
