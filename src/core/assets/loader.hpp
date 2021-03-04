@@ -41,7 +41,7 @@ public:
 struct AssetLoader
 {
     virtual auto extensions() const noexcept -> std::span<std::string_view const> = 0;
-    virtual auto load(std::string_view path, std::span<std::byte const> bytes) const -> tl::optional<LoadedAsset> = 0;
+    virtual auto load(std::string_view path, std::span<std::byte> bytes) const -> tl::optional<LoadedAsset> = 0;
 };
 
 template <typename T>

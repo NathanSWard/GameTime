@@ -42,7 +42,7 @@ struct TestAssetLoader final : AssetLoader
         return std::span{ exts.data(), 1 };
     }
 
-    auto load(std::string_view path, std::span<std::byte const> bytes) const -> tl::optional<LoadedAsset> final
+    auto load(std::string_view path, std::span<std::byte> bytes) const -> tl::optional<LoadedAsset> final
     {
         ++times_loaded;
         return LoadedAsset::create<TestAsset>();
@@ -58,7 +58,7 @@ struct FailingTestAssetLoader final : AssetLoader
         return std::span{ exts.data(), 1 };
     }
 
-    auto load(std::string_view path, std::span<std::byte const> bytes) const -> tl::optional<LoadedAsset> final
+    auto load(std::string_view path, std::span<std::byte> bytes) const -> tl::optional<LoadedAsset> final
     {
         return tl::nullopt;
     }
