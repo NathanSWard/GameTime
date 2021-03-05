@@ -19,8 +19,9 @@ public:
     {
         auto const full_path = m_root_path / std::filesystem::path{ path };
         return [path = MOV(full_path)] () -> Result {
-            auto* const file = std::fopen(path.string().c_str(), "rb");
-            if (file == nullptr) {
+            FILE* file = nullptr;
+            auto const err = fopen_s(&file, path.string().c_str(), "rb");
+            if (err != 0) {
                 return tl::make_unexpected(Error::IoError);
             }
 
