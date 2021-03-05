@@ -126,7 +126,7 @@ struct InitializeWindow
     WindowSettings settings;
 };
 
-struct CloseWindow
+struct ExitWindow
 {
     WindowId id;
 };
@@ -188,17 +188,130 @@ struct fmt::formatter<WindowId> {
 };
 
 template <>
+struct fmt::formatter<WindowDescriptor> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(WindowDescriptor const& wd, Ctx& ctx) {
+        return format_to(ctx.out(), "WindowDescriptor(flags: {})", wd.flags);
+    }
+};
+
+template <>
+struct fmt::formatter<WindowSettings> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(WindowSettings const& ws, Ctx& ctx) {
+        return format_to(
+            ctx.out(), 
+            "WindowSettings(title: {}, x: {}, y: {}, width: {}, height: {}, descriptor: {})", 
+            ws.title,
+            ws.x,
+            ws.y,
+            ws.width,
+            ws.height,
+            ws.descriptor);
+    }
+};
+
+template <>
+struct fmt::formatter<WindowResized> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(WindowResized const& wr, Ctx& ctx) {
+        return format_to(
+            ctx.out(), 
+            "WindowResized(id: {}, width: {}, height: {})", 
+            wr.id,
+            wr.width,
+            wr.height);
+    }
+};
+
+template <>
+struct fmt::formatter<InitializeWindow> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(InitializeWindow const& iw, Ctx& ctx) {
+        return format_to(ctx.out(), "InitializeWindow(settings: {})", iw.settings);
+    }
+};
+
+template <>
+struct fmt::formatter<ExitWindow> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(ExitWindow const& cw, Ctx& ctx) {
+        return format_to(ctx.out(), "ExitWindow(id: {})", cw.id);
+    }
+};
+
+template <>
+struct fmt::formatter<WindowCreated> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(WindowCreated const& wc, Ctx& ctx) {
+        return format_to(ctx.out(), "WindowCreated(id: {})", wc.id);
+    }
+};
+
+template <>
+struct fmt::formatter<WindowCloseRequest> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(WindowCloseRequest const& wcr, Ctx& ctx) {
+        return format_to(ctx.out(), "WindowCloseRequest(id: {})", wcr.id);
+    }
+};
+
+template <>
 struct fmt::formatter<CursorMoved> {
     constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
     template <typename Ctx>
     auto format(CursorMoved const& cm, Ctx& ctx) {
         return format_to(
-            ctx.out(), 
-            "CursorMoved(id: {}, position: ({}, {}))", 
-            cm.id, 
-            cm.position.x(), 
+            ctx.out(),
+            "CursorMoved(id: {}, position: ({}, {}))",
+            cm.id,
+            cm.position.x(),
             cm.position.y());
+    }
+};
+
+template <>
+struct fmt::formatter<CursorEntered> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(CursorEntered const& ce, Ctx& ctx) {
+        return format_to(ctx.out(), "CursorEntered(id: {})", ce.id);
+    }
+};
+
+template <>
+struct fmt::formatter<CursorLeft> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(CursorLeft const& cl, Ctx& ctx) {
+        return format_to(ctx.out(), "CursorLeft(id: {})", cl.id);
+    }
+};
+
+template <>
+struct fmt::formatter<WindowFocused> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(WindowFocused const& wf, Ctx& ctx) {
+        return format_to(ctx.out(), "WindowFocused(id: {}, focused: {})", wf.id, wf.focused);
     }
 };
 
@@ -213,5 +326,20 @@ struct fmt::formatter<FileDragAndDrop> {
             "FileDragAndDrop(id: {}, path: {})",
             fdd.id,
             fdd.path);
+    }
+};
+
+template <>
+struct fmt::formatter<WindowMoved> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(WindowMoved const& wm, Ctx& ctx) {
+        return format_to(
+            ctx.out(), 
+            "WindowMoved(id: {}, position: ({}, {}))", 
+            wm.id, 
+            wm.position.x(),
+            wm.position.y());
     }
 };

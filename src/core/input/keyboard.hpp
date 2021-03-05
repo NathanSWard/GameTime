@@ -153,7 +153,7 @@ struct fmt::formatter<KeyboardInput> {
     auto format(KeyboardInput const& ki, Ctx& ctx) {
         return format_to(
             ctx.out(),
-            "KeyboardInput(scan_code: {}, key_code: {}, state: {}",
+            "KeyboardInput(scan_code: {}, key_code: {}, state: {})",
             ki.scan_code,
             ki.key_code,
             ki.state);

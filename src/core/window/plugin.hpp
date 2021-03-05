@@ -17,6 +17,7 @@ struct WindowPlugin
             .add_event<InitializeWindow>()
             .add_event<WindowCreated>()
             .add_event<WindowCloseRequest>()
+            .add_event<ExitWindow>()
             .add_event<CursorMoved>()
             .add_event<CursorEntered>()
             .add_event<CursorLeft>()
