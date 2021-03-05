@@ -86,9 +86,9 @@ void sdl_handle_keyboard_event(
     // TODO
 }
 
-void sdl_handle_event_system(Resources& resources)
+void sdl_handle_event(Resources& resources)
 {
-    SDL_Event e;
+    SDL_Event e{};
     while (SDL_PollEvent(&e)) {
         switch (e.type) {
             case SDL_QUIT: {

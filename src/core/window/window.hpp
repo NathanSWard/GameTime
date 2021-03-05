@@ -3,6 +3,7 @@
 #include <core/math/vec.hpp>
 #include <core/window/event.hpp>
 #include <sdl/sdl.hpp>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <string_view>
 #include <tl/optional.hpp>
@@ -28,7 +29,7 @@ public:
     constexpr Window(Window&&) noexcept = default;
     constexpr Window& operator=(Window&&) noexcept = default;
 
-    auto create(WindowSettings const& settings) noexcept -> tl::expected<Window, sdl::Error>
+    static auto create(WindowSettings const& settings) noexcept -> tl::expected<Window, sdl::Error>
     {
         auto sdl_win = sdl::Window::create(
             settings.title.c_str(),
@@ -107,4 +108,44 @@ public:
     {
         return std::string_view{ SDL_GetWindowTitle(const_cast<SDL_Window*>(m_window.raw())) };
     }
+};
+
+struct Windows
+{
+    std::unordered_map<WindowId, Window> m_windows;
+
+public:
+    auto add(Window&& window) -> WindowId
+    {
+        auto const id = window.id();
+        m_windows.try_emplace(id, MOV(window));
+        return id;
+    }
+
+    auto remove(WindowId const id) noexcept -> bool
+    {
+        if (auto const iter = m_windows.find(id); iter != m_windows.end()) {
+            m_windows.erase(iter);
+            return true;
+        }
+        return false;
+    }
+
+    auto get(WindowId const id) noexcept -> tl::optional<Window&>
+    {
+        if (auto const iter = m_windows.find(id); iter != m_windows.end()) {
+            return tl::make_optional<Window&>(iter->second);
+        }
+        return {};
+    }
+
+    auto get(WindowId const id) const noexcept -> tl::optional<Window const&>
+    {
+        if (auto const iter = m_windows.find(id); iter != m_windows.end()) {
+            return tl::make_optional<Window const&>(iter->second);
+        }
+        return {};
+    }
+
+    void clear() noexcept { m_windows.clear(); }
 };

@@ -14,7 +14,7 @@ struct WindowPlugin
     {
         builder
             .add_event<WindowResized>()
-            .add_event<CreateWindow>()
+            .add_event<InitializeWindow>()
             .add_event<WindowCreated>()
             .add_event<WindowCloseRequest>()
             .add_event<CursorMoved>()
@@ -22,7 +22,8 @@ struct WindowPlugin
             .add_event<CursorLeft>()
             .add_event<WindowFocused>()
             .add_event<FileDragAndDrop>()
-            .add_event<WindowMoved>();
+            .add_event<WindowMoved>()
+            .set_resource<Windows>();
 
         if (add_primary_window) {
             auto& resources = builder.resources();
@@ -31,8 +32,8 @@ struct WindowPlugin
                 .map([](auto const& r) { return *r; })
                 .value_or(WindowSettings{});
 
-            auto create_window_event = resources.get_resource<Events<CreateWindow>>().value();
-            create_window_event->send(CreateWindow{
+            auto create_window_event = resources.get_resource<Events<InitializeWindow>>().value();
+            create_window_event->send(InitializeWindow{
                 .settings = MOV(window_settings)
                 });
         }

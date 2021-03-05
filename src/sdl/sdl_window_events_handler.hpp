@@ -4,19 +4,6 @@
 #include <core/game/game.hpp>
 #include <core/window/event.hpp>
 
-/*
-.add_event<WindowResized>()
-.add_event<CreateWindow>()
-.add_event<WindowCreated>()
-.add_event<WindowCloseRequest>()
-.add_event<CursorMoved>()
-.add_event<CursorEntered>()
-.add_event<CursorLeft>()
-.add_event<WindowFocused>()
-.add_event<FileDragAndDrop>()
-.add_event<WindowMoved>();
-*/
-
 void sdl_handle_window_event(
     SDL_WindowEvent const& e,
     Resources& resources)

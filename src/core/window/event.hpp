@@ -1,10 +1,30 @@
 #pragma once
 
 #include <core/math/vec.hpp>
+#include <functional>
 #include <filesystem>
 #include <SDL2/SDL.h>
 
 struct WindowId { std::uint32_t id = 0; };
+
+constexpr auto operator==(WindowId const& lhs, WindowId const& rhs) noexcept
+{
+    return lhs.id == rhs.id;
+}
+
+constexpr auto operator!=(WindowId const& lhs, WindowId const& rhs) noexcept
+{
+    return !(lhs == rhs);
+}
+
+template <>
+struct std::hash<WindowId>
+{
+    auto operator()(WindowId const& id) const noexcept -> std::size_t
+    {
+        return id.id;
+    }
+};
 
 struct WindowDescriptor
 {
@@ -102,7 +122,7 @@ struct WindowResized
     int width, height = 0;
 };
 
-struct CreateWindow
+struct InitializeWindow
 {
     WindowSettings settings;
 };
