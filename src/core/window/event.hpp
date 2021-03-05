@@ -2,7 +2,6 @@
 
 #include <core/math/vec.hpp>
 #include <functional>
-#include <filesystem>
 #include <SDL2/SDL.h>
 
 struct WindowId { std::uint32_t id = 0; };
@@ -167,7 +166,7 @@ struct WindowFocused
 struct FileDragAndDrop
 {
     WindowId id;
-    std::filesystem::path path;
+    std::string path;
 };
 
 struct WindowMoved
@@ -200,5 +199,19 @@ struct fmt::formatter<CursorMoved> {
             cm.id, 
             cm.position.x(), 
             cm.position.y());
+    }
+};
+
+template <>
+struct fmt::formatter<FileDragAndDrop> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(FileDragAndDrop const& fdd, Ctx& ctx) {
+        return format_to(
+            ctx.out(),
+            "FileDragAndDrop(id: {}, path: {})",
+            fdd.id,
+            fdd.path);
     }
 };
