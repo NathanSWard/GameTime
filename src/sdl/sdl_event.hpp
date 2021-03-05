@@ -6,7 +6,7 @@
 #include <core/input/input.hpp>
 #include <core/input/keyboard.hpp>
 #include <core/input/mouse.hpp>
-#include <core/window/event.hpp>
+#include <sdl/sdl_window_events_handler.hpp>
 
 void sdl_handle_quit_event(
     Events<GameExit>& exit_events,
@@ -86,36 +86,61 @@ void sdl_handle_keyboard_event(
     // TODO
 }
 
-void sdl_event_system(
-    Resource<Events<GameExit>> game_exit_events,
-    Resource<Events<MouseMotion>> mouse_motion_events,
-    Resource<Events<CursorMoved>> cursor_moved_events,
-    Resource<Events<MouseButtonInput>> mouse_button_events,
-    Resource<Events<MouseWheel>> mouse_wheel_events,
-    Resource<Events<KeyboardInput>> keyboard_events)
+void sdl_handle_event_system(Resources& resources)
 {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         switch (e.type) {
-            case SDL_QUIT:
-                sdl_handle_quit_event(*game_exit_events, e.quit);
-                break;
-            case SDL_MOUSEMOTION: 
-                sdl_handle_mouse_motion_event(*mouse_motion_events, *cursor_moved_events, e.motion);
-                break;
+            case SDL_QUIT: {
+                auto events = resources.get_resource<Events<GameExit>>();
+                DEBUG_ASSERT(events.has_value(), "Events<GameExit> does not exist.");
+                sdl_handle_quit_event(**events, e.quit);
+            } break;
+            
+            case SDL_MOUSEMOTION: {
+                auto mouse_motion_events = resources.get_resource<Events<MouseMotion>>();
+                DEBUG_ASSERT(mouse_motion_events.has_value(), "Events<MouseMotion> does not exist.");
+
+                auto cursor_moved_events = resources.get_resource<Events<CursorMoved>>();
+                DEBUG_ASSERT(cursor_moved_events.has_value(), "Events<CursorMoved> does not exist.");
+
+                sdl_handle_mouse_motion_event(**mouse_motion_events, **cursor_moved_events, e.motion);
+            } break;
+            
             case SDL_MOUSEBUTTONDOWN: 
                 [[fallthrough]];
-            case SDL_MOUSEBUTTONUP:
-                sdl_handle_mouse_button_event(*mouse_button_events, e.button);
-                break;
-            case SDL_MOUSEWHEEL:
-                sdl_handle_mouse_wheel_event(*mouse_wheel_events, e.wheel);
-                break;
+            case SDL_MOUSEBUTTONUP: {
+                auto events = resources.get_resource<Events<MouseButtonInput>>();
+                DEBUG_ASSERT(events.has_value(), "Events<MouseButtonInput> does not exist.");
+                sdl_handle_mouse_button_event(**events, e.button);
+            } break;
+           
+            case SDL_MOUSEWHEEL: {
+                auto events = resources.get_resource<Events<MouseWheel>>();
+                DEBUG_ASSERT(events.has_value(), "Events<MouseWheel> does not exist.");
+                sdl_handle_mouse_wheel_event(**events, e.wheel);
+            } break;
+            
             case SDL_KEYDOWN: 
                 [[fallthrough]];
-            case SDL_KEYUP:
-                sdl_handle_keyboard_event(*keyboard_events, e.key);
+            case SDL_KEYUP: {
+                auto events = resources.get_resource<Events<KeyboardInput>>();
+                DEBUG_ASSERT(events.has_value(), "Events<KeyboardInput> does not exist.");
+                sdl_handle_keyboard_event(**events, e.key);
+            } break;
+            
+            case SDL_WINDOWEVENT:
+                sdl_handle_window_event(e.window, resources);
                 break;
+
+            case SDL_DROPTEXT:
+                [[fallthrough]];
+            case SDL_DROPFILE: {
+                auto events = resources.get_resource<Events<FileDragAndDrop>>();
+                DEBUG_ASSERT(events.has_value(), "Events<FileDragAndDrop> does not exist.");
+                sdl_handle_file_drag_and_drop(e.drop, **events);
+            } break;
+            
             default:
                 break;
         }
