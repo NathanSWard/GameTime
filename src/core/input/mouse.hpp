@@ -4,12 +4,13 @@
 #include <core/game/events.hpp>
 #include <core/input/input.hpp>
 #include <core/math/vec.hpp>
+#include <fmt/format.h>
 #include <functional>
 
 class MouseButton
 {
 public:
-    enum class Type : std::uint16_t {
+    enum Type : std::uint16_t {
         Left,
         Right,
         Middle,
@@ -101,3 +102,63 @@ void mouse_button_input_system(
         }
     }
 }
+
+// Format Specifiers
+
+template <>
+struct fmt::formatter<MouseButton> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(MouseButton const& mb, Ctx& ctx) {
+        switch (mb.type()) {
+            case MouseButton::Left: return format_to(ctx.out(), "MouseButton::Left");
+            case MouseButton::Right: return format_to(ctx.out(), "MouseButton::Right");
+            case MouseButton::Middle: return format_to(ctx.out(), "MouseButton::Middle");
+            case MouseButton::Other: return format_to(ctx.out(), "MouseButton::Other({})", mb.other().button);
+        }
+    }
+};
+
+template <>
+struct fmt::formatter<MouseButtonInput> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(MouseButtonInput const& mbi, Ctx& ctx) {
+        return format_to(
+            ctx.out(),
+            "MouseButtonInput(button: {}, state: {}, clicks: {})",
+            mbi.button,
+            mbi.state,
+            mbi.clicks);
+    }
+};
+
+template <>
+struct fmt::formatter<MouseMotion> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(MouseMotion const& mm, Ctx& ctx) {
+        return format_to(
+            ctx.out(),
+            "MouseMotion(delta: ({}, {}))",
+            mm.delta.x(),
+            mm.delta.y());
+    }
+};
+
+template <>
+struct fmt::formatter<MouseWheel> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(MouseWheel const& mw, Ctx& ctx) {
+        return format_to(
+            ctx.out(),
+            "MouseWheel(x: {}, y: {})", 
+            mw.x, 
+            mw.y);
+    }
+};

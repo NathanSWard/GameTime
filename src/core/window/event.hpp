@@ -175,3 +175,30 @@ struct WindowMoved
     WindowId id;
     Vec2i position;
 };
+
+// Format Specifiers
+
+template <>
+struct fmt::formatter<WindowId> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(WindowId const& wid, Ctx& ctx) {
+        return format_to(ctx.out(), "WindowId(id: {})", wid.id);
+    }
+};
+
+template <>
+struct fmt::formatter<CursorMoved> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(CursorMoved const& cm, Ctx& ctx) {
+        return format_to(
+            ctx.out(), 
+            "CursorMoved(id: {}, position: ({}, {}))", 
+            cm.id, 
+            cm.position.x(), 
+            cm.position.y());
+    }
+};

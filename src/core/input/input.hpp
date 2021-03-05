@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fmt/format.h>
 #include <ranges>
 #include <util/common.hpp>
 #include <unordered_set>
@@ -89,5 +90,16 @@ public:
     auto get_just_released() const noexcept
     {
         return std::views::all(m_just_released);
+    }
+};
+// Format Specifiers
+
+template <>
+struct fmt::formatter<ElementState> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(ElementState const& mb, Ctx& ctx) {
+        return format_to(ctx.out(), "ElementState::{}", mb.is_pressed() ? "Pressed" : "Released");
     }
 };
