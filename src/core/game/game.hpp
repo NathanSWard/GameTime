@@ -52,6 +52,7 @@ concept Plugin = requires(P&& plugin, GameBuilder& builder)
 
 class GameBuilder {
     Game m_game;
+    entity_t m_curr_entity = null_entity;
 
 public:
     GameBuilder()

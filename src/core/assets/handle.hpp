@@ -102,6 +102,9 @@ class Handle
 public:
     constexpr Handle(HandleId id) noexcept : m_id(id) {}
 
+    constexpr Handle(Handle&&) noexcept = default;
+    constexpr Handle& operator=(Handle&&) noexcept = default;
+
     [[nodiscard]] auto id() const noexcept -> HandleId { return m_id; }
     [[nodiscard]] constexpr auto untyped() const noexcept -> UntypedHandle;
 };

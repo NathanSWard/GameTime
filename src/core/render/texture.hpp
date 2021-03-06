@@ -68,6 +68,12 @@ public:
         return *this;
     }
 
+    auto raw_texture() noexcept -> SDL_Texture*
+    {
+        DEBUG_ASSERT(m_is_texture, "Texture has not be updated from a surface to texture yet.");
+        return m_texture;
+    }
+
     ~Texture() noexcept { destroy(); }
 };
 

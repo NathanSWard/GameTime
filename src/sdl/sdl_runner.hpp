@@ -1,8 +1,10 @@
 #pragma once
 
 #include <core/game/game.hpp>
+#include <core/render/render_context.hpp>
 #include <core/window/event.hpp>
 #include <core/window/window.hpp>
+
 #include "sdl_event.hpp"
 
 void handle_create_window_events(
@@ -43,9 +45,17 @@ void handle_create_window_events(
     }
 }
 
+void handle_initialize_render_context_events(
+    Resources& resources,
+    ManualEventReader<InitializeRenderContext>& init_render_ctx_reader)
+{
+    // TODO
+}
+
 void sdl_runner(Game& game)
 {
     auto create_window_event_reader = ManualEventReader<InitializeWindow>();
+    auto create_render_context_reader = ManualEventReader<InitializeRenderContext>();
     auto exit_window_event_reader = ManualEventReader<ExitWindow>();
     auto game_exit_event_reader = ManualEventReader<GameExit>();
 
@@ -72,6 +82,9 @@ void sdl_runner(Game& game)
             game.resources, 
             create_window_event_reader, 
             exit_window_event_reader);
+        handle_initialize_render_context_events(
+            game.resources,
+            create_render_context_reader);
         game.update();
         
         if (check_for_app_exit()) {

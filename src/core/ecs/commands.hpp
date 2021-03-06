@@ -4,12 +4,19 @@
 #include "resource.hpp"
 #include "world.hpp"
 
+template <typename T>
+concept Bundle = requires(T && bundle, World & world)
+{
+    { FWD(bundle).build(world) };
+};
+
 // TODO:
 //     Lazy commands??
 //     vector<unique_ptr<Command>>
 class Commands {
     Resources* m_resources;
     World* m_world;
+    entity_t m_curr_entity = null_entity;
 
 public:
 
@@ -24,31 +31,59 @@ public:
     constexpr Commands& operator=(Commands&&) noexcept = default;
     constexpr Commands& operator=(Commands const&) noexcept = default;
 
-    [[nodiscard]] auto spawn() -> entity_t
+    auto spawn(entity_t* const e = nullptr) -> Commands&
     {
-        return m_world->create();
+        auto const entity = m_world->create();
+        m_curr_entity = entity;
+        if (e) {
+            *e = entity;
+        }
+        return *this;
     }
 
-    void despawn(entity_t const e)
+    template <Bundle B>
+    auto spawn(B&& bundle) -> Commands&
+    {
+        FWD(bundle).build(*m_world);
+        return *this;
+    }
+
+    auto set_current_entity(entity_t const e) -> Commands&
+    {
+        m_curr_entity = e;
+        return *this;
+    }
+
+    auto current_entity() const noexcept -> entity_t
+    {
+        return m_curr_entity;
+    }
+
+    auto despawn(entity_t const e) -> Commands&
     {
         m_world->destroy(e);
+        return *this;
     }
 
-    void clear_entities()
+    auto clear_entities() -> Commands&
     {
         m_world->clear();
+        return *this;
     }
 
     template <typename T, typename... Args>
-    auto add_component(entity_t const e, Args&&... args) -> decltype(auto)
+    auto add_component(Args&&... args) -> Commands&
     {
-        return m_world->emplace<T>(e, FWD(args)...);
+        DEBUG_ASSERT(m_curr_entity != null_entity, "`Commands` does not contain a vlail entity. Consider using `spawn()` to set one.");
+        m_world->emplace<T>(m_curr_entity, FWD(args)...);
+        return *this;
     }
 
     template <typename... Cs>
-    void remove_components(entity_t const e)
+    auto remove_components() -> Commands&
     {
-        m_world->remove<Cs...>(e);
+        m_world->remove<Cs...>(m_curr_entity);
+        return *this;
     }
 
     template <typename R, typename... Args>

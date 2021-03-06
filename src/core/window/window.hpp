@@ -25,6 +25,8 @@ class Window
 
     Window(sdl::Window&& w) noexcept : m_window(MOV(w)) {}
 
+    friend class RenderContext;
+
 public:
     constexpr Window(Window&&) noexcept = default;
     constexpr Window& operator=(Window&&) noexcept = default;
