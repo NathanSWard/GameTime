@@ -22,18 +22,11 @@ class RenderContext
     RenderContext(sdl::Renderer&& renderer) noexcept : m_renderer(MOV(renderer)) {}
 
 public:
-    static auto create(RenderContextSettings const& settings, Windows& windows) -> tl::optional<RenderContext>
+    static auto create(RenderContextSettings const& settings, Window& window) -> tl::expected<RenderContext, sdl::Error>
     {
-        auto window = windows.get(settings.window_id);
-        if (!window) {
-            panic("Renderer unable to find window with id: {}", panic_args(settings.window_id));
-            return {};
-        }
-
-        auto renderer = sdl::Renderer::create(window->m_window, -1, settings.flags);
+        auto renderer = sdl::Renderer::create(window.m_window, -1, settings.flags);
         if (!renderer) {
-            panic("Renderer creation failed. Error: {}", panic_args(renderer.error().msg));
-            return {};
+            return tl::make_unexpected(renderer.error());
         }
 
         return RenderContext(*MOV(renderer));

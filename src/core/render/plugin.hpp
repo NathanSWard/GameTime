@@ -18,18 +18,26 @@ struct RenderPlugin
             .prepare_components<Visible, Transparent, Color>()
             .add_asset<Texture>()
             .add_stage_after<RenderStage, CoreStages::PostUpdate>()
-            .add_system_to_stage<RenderStage>(render_draw_system)
-            .add_event<InitializeRenderContext>();
+            .add_system_to_stage<RenderStage>(render_draw_system);
 
         auto& resources = builder.resources();
-        auto render_ctx_settings = resources
+        auto const rctx_settings = resources
             .get_resource<RenderContextSettings>()
             .map([](auto const& r) { return *r; })
             .value_or(RenderContextSettings{});
 
-        auto create_window_event = resources.get_resource<Events<InitializeRenderContext>>().value();
-        create_window_event->send(InitializeRenderContext{
-            .settings = render_ctx_settings
-            });
+        auto window = resources.get_resource<Window>();
+        if (!window) {
+            panic("RenderPlugin requires `Window` resource to exist.");
+            return;
+        }
+
+        auto rctx = RenderContext::create(rctx_settings, **window);
+        if (!rctx) {
+            panic("RenderContext failed to initialize. Error: {}", panic_args(rctx.error().msg));
+            return;
+        }
+
+        builder.set_resource<RenderContext>(*MOV(rctx));
     }
 };

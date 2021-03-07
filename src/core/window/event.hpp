@@ -121,17 +121,7 @@ struct WindowResized
     int width, height = 0;
 };
 
-struct InitializeWindow
-{
-    WindowSettings settings;
-};
-
 struct ExitWindow
-{
-    WindowId id;
-};
-
-struct WindowCreated
 {
     WindowId id;
 };
@@ -231,32 +221,12 @@ struct fmt::formatter<WindowResized> {
 };
 
 template <>
-struct fmt::formatter<InitializeWindow> {
-    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
-
-    template <typename Ctx>
-    auto format(InitializeWindow const& iw, Ctx& ctx) {
-        return format_to(ctx.out(), "InitializeWindow(settings: {})", iw.settings);
-    }
-};
-
-template <>
 struct fmt::formatter<ExitWindow> {
     constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
     template <typename Ctx>
     auto format(ExitWindow const& cw, Ctx& ctx) {
         return format_to(ctx.out(), "ExitWindow(id: {})", cw.id);
-    }
-};
-
-template <>
-struct fmt::formatter<WindowCreated> {
-    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
-
-    template <typename Ctx>
-    auto format(WindowCreated const& wc, Ctx& ctx) {
-        return format_to(ctx.out(), "WindowCreated(id: {})", wc.id);
     }
 };
 
