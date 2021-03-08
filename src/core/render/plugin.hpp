@@ -18,6 +18,7 @@ struct RenderPlugin
             .prepare_components<Visible, Transparent, Color>()
             .add_asset<Texture>()
             .add_stage_after<RenderStage, CoreStages::PostUpdate>()
+            .add_system(sdl_update_texture_assets_system)
             .add_system_to_stage<RenderStage>(render_draw_system);
 
         auto& resources = builder.resources();

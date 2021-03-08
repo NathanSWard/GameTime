@@ -107,7 +107,8 @@ struct WindowSettings
     static constexpr int position_centered = SDL_WINDOWPOS_CENTERED;
 
     std::string title = "Title";
-    int x, y = position_undefined;
+    int x = position_centered;
+    int y = position_centered;
     int width = 1280;
     int height = 720;
 

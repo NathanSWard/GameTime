@@ -1,27 +1,22 @@
 ﻿#include <fmt/format.h>
 #include <spdlog/spdlog.h>
-#include <entt/entt.hpp>
-#include "sdl/sdl.hpp"
 
-#include <core/game.hpp>
-#include <core/input/plugin.hpp>
+#include <core/game/game.hpp>
+#include <core/game/default_plugins.hpp>
+
+void startup(Commands cmds, Resource<AssetServer> server)
+{
+	cmds.spawn(SpriteBundle{
+			.sprite = Sprite { .size = Vec2(80.f, 80.f) },
+			.texture = server->load<Texture>("wizard-sprite.png"),
+		});
+}
 
 int main(int, char**)
 {
-	auto const context = sdl::Context::create(SDL_INIT_VIDEO);
-	if (!context) {
-		spdlog::error("sdl::Context::create failed. Error: {}", context.error().msg);
-		return EXIT_FAILURE;
-	}
-
-	auto window = sdl::Window::create("Title", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 500, 500, SDL_WINDOW_RESIZABLE);
-	if (!window) {
-		spdlog::error("sdl::Window::create failed. Error: {}", window.error().msg);
-		return EXIT_FAILURE;
-	}
-
-	Game g;
-	g.add_plugin(InputPlugin{});
+	GameBuilder builder;
+	builder.add_plugin(DefaultPlugins{}).add_startup_system(startup);
+	MOV(builder).build().run();
 
 	return 0;
 }

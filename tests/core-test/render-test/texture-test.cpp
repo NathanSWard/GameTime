@@ -34,7 +34,7 @@ void texture_test()
         expect(!assets.contains_asset(shandle.id()));
         expect(assets.contains_asset(thandle.id()));
 
-        sdl_surface_to_texture_system(assets, rctx_resource);
+        assets.update(*rctx_resource);
 
         expect(assets.size() == 2);
         expect(assets.unready_texture_size() == 0);
@@ -57,7 +57,7 @@ void texture_test()
         expect(assets.size() == 1);
         expect(assets.unready_texture_size() == 1);
 
-        sdl_surface_to_texture_system(assets, rctx_resource);
+        assets.update(*rctx_resource);
 
         expect(assets.size() == 2);
         expect(assets.unready_texture_size() == 0);

@@ -82,7 +82,6 @@ class Assets<Texture> : public AssetsBase<Texture>
 {
     using vec_t = std::vector<std::pair<HandleId, Texture>>;
     vec_t m_surfaces;
-    friend void sdl_surface_to_texture_system(Assets<Texture>&, Resource<RenderContext>);
 
 public:
     auto unready_texture_size() const noexcept -> std::size_t { return m_surfaces.size(); }
@@ -145,28 +144,32 @@ public:
 
         return Handle<Texture>{ id };
     }
+
+    void update(RenderContext& rctx)
+    {
+        if (m_surfaces.empty()) {
+            return;
+        }
+
+        for (auto& [id, asset] : m_surfaces) {
+            DEBUG_ASSERT(!asset.m_is_texture, "`Texture` is already an SDL_Texture.");
+
+            auto* const sdl_surface = asset.m_surface;
+            auto* const sdl_texture = SDL_CreateTextureFromSurface(rctx.raw(), sdl_surface);
+
+            asset.m_texture = sdl_texture;
+            asset.m_is_texture = true;
+
+            SDL_FreeSurface(sdl_surface);
+
+            m_assets.insert_or_assign(MOV(id), MOV(asset));
+        }
+
+        vec_t().swap(m_surfaces);
+    }
 };
 
-void sdl_surface_to_texture_system(Assets<Texture>& assets, Resource<RenderContext> rcontext)
+void sdl_update_texture_assets_system(Resource<Assets<Texture>> assets, Resource<RenderContext> rctx)
 {
-    if (assets.m_surfaces.empty()) {
-        return;
-    }
-
-    for (auto& [id, asset] : assets.m_surfaces) {
-        DEBUG_ASSERT(!asset.m_is_texture, "`Texture` is already an SDL_Texture.");
-
-        auto* const sdl_surface = asset.m_surface;
-        auto* const sdl_texture = SDL_CreateTextureFromSurface(rcontext->raw(), sdl_surface);
-        
-        asset.m_texture = sdl_texture;
-        asset.m_is_texture = true;
-
-        SDL_FreeSurface(sdl_surface);
-
-        assets.m_assets.insert_or_assign(MOV(id), MOV(asset));
-    }
-
-    using vec_t = typename Assets<Texture>::vec_t;
-    vec_t().swap(assets.m_surfaces);
+    assets->update(*rctx);
 }

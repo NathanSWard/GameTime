@@ -41,13 +41,15 @@ namespace {
 
 } // namespace
 
-// TODO: Possibly loop though all windows? Or a renderer per window?
 void render_draw_system(
     Resource<RenderContext> ctx,
     Resource<Assets<Texture>> textures,
     Query<With<Sprite const, Handle<Texture> const, Transform const, Visible const>, Without<Color>> sprites_to_draw,
     Query<With<Sprite const, Handle<Texture> const, Transform const, Color const, Visible const>> colored_sprites_to_draw)
 {
+    SDL_SetRenderDrawColor(ctx->raw(), 255, 255, 255, 255);
+    SDL_RenderClear(ctx->raw());
+
     sprites_to_draw.each([&](Sprite const& sprite, Handle<Texture> const& thandle, Transform const& tform) {
         auto texture = textures->get_asset(thandle);
         if (!texture) {
@@ -92,4 +94,6 @@ void render_draw_system(
             SDL_SetTextureColorMod(texture->raw_texture(), r, g, b);
         }
         });
+
+    SDL_RenderPresent(ctx->raw());
 }
