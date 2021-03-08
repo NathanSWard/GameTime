@@ -128,9 +128,7 @@ void system_test()
         scheduler.add_stage<StageT>();
     
         auto add_entity_and_resource = [](Commands cmds) {
-            auto e = cmds.spawn();
-            cmds.add_component<int>(e, 42);
-            cmds.set_resource<int>(42);
+            cmds.spawn().add_component<int>(42).set_resource<int>(42);
         };
 
         auto system = scheduler.add_system_to_stage<StageT>(add_entity_and_resource);

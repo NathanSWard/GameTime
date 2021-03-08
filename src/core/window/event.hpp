@@ -1,6 +1,7 @@
 #pragma once
 
 #include <core/math/vec.hpp>
+#include <fmt/format.h>
 #include <functional>
 #include <SDL2/SDL.h>
 

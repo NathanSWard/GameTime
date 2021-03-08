@@ -1,4 +1,5 @@
 #include <ut.hpp>
+#include <core/window/window.hpp>
 #include <core/render/texture.hpp>
 
 using namespace boost::ut;
@@ -6,18 +7,20 @@ using namespace boost::ut;
 void texture_test()
 {
     "[Texture/Assets<Texture>]"_test = [] {
-        auto win = sdl::Window::create("text", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 40, 40, 0);
-        expect((win.has_value()) >> fatal);
-        auto ren = sdl::Renderer::create(*win, -1, 0);
-        expect((ren.has_value()) >> fatal);
+        auto const wsettings = WindowSettings{};
+        auto window = Window::create(wsettings);
+        expect((window.has_value()) >> fatal);
 
-        auto rctx = RenderContext(*MOV(ren));
-        auto rctx_resource = make_resource<RenderContext>(rctx);
+        auto const rsettings = RenderContextSettings{};
+        auto rctx = RenderContext::create(rsettings, *window);
+        expect((rctx.has_value()) >> fatal);
+
+        auto rctx_resource = make_resource<RenderContext>(*rctx);
 
         auto surface = SDL_CreateRGBSurface(0, 10, 10, 32, 0, 0, 0, 0);
         expect((surface != nullptr) >> fatal);
 
-        auto texture = SDL_CreateTextureFromSurface(rctx.raw(), surface);
+        auto texture = SDL_CreateTextureFromSurface(rctx->raw(), surface);
         expect((texture != nullptr) >> fatal);
 
         auto assets = Assets<Texture>();
@@ -42,7 +45,7 @@ void texture_test()
         auto surface2 = SDL_CreateRGBSurface(0, 10, 10, 32, 0, 0, 0, 0);
         expect((surface2 != nullptr) >> fatal);
 
-        auto texture2 = SDL_CreateTextureFromSurface(rctx.raw(), surface2);
+        auto texture2 = SDL_CreateTextureFromSurface(rctx->raw(), surface2);
         expect((texture2 != nullptr) >> fatal);
 
         assets.set_asset(shandle, surface2);

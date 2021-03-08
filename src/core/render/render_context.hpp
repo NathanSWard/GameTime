@@ -6,7 +6,6 @@
 
 struct RenderContextSettings
 {
-    WindowId window_id;
     std::uint32_t flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
 };
 
