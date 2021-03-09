@@ -91,13 +91,6 @@ void system_test()
             expect(system_test_execute::global_count == 1);
         };
 
-        should("lacking resource sholud not execute sytem") = [&] {
-            system_test_execute::global_count = 0;
-            system2.run(r, w);
-            system3.run(r, w);
-            expect(system_test_execute::global_count == 0);
-        };
-
         // add required resource
         r.set_resource<int>(32);
 
@@ -107,15 +100,6 @@ void system_test()
             system2.run(r, w);
             system3.run(r, w);
             expect(system_test_execute::global_count == 3);
-        };
-
-        // remove resource
-        r.remove_resource<int>();
-        should("after removing resource, should not execute sytem") = [&] {
-            system_test_execute::global_count = 0;
-            system2.run(r, w);
-            system3.run(r, w);
-            expect(system_test_execute::global_count == 0);
         };
     };
 
