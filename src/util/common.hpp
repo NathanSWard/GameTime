@@ -16,6 +16,12 @@ constexpr auto type_id() noexcept -> type_id_t
     return entt::type_id<T>().hash();
 }
 
+template <typename T>
+constexpr auto type_name() noexcept -> std::string_view
+{
+    return entt::type_name<T>::value();
+}
+
 struct in_place_t {};
 inline constexpr in_place_t in_place{};
 

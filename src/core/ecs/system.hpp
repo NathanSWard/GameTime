@@ -58,16 +58,15 @@ namespace internal {
     // if a value is an optional check `has_value()`, else return true
     template <typename T>
     requires (!is_optional_v<T>)
-    constexpr auto if_optional_check_value(T const&) -> bool
-    {
-        return true;
-    }
+    constexpr void if_optional_check_value(T const&) {}
 
     template <typename O>
     requires (is_optional_v<O>)
-    constexpr auto if_optional_check_value(O const& opt) -> bool
+    constexpr void if_optional_check_value(O const& opt)
     {
-        return opt.has_value();
+        // TODO: perhaps panic in release mode as well?
+        DEBUG_ASSERT(opt.has_value(), "System was unable to find: '{}'.", panic_args(type_name<typename O::value_type>()));
+        UNUSED(opt);
     }
 
     // checks a type to ensure its a valid system argument
@@ -177,13 +176,9 @@ namespace internal {
 
         auto args = get_system_args<std::remove_cvref_t<Args>...>(settings, res, world);
 
-        bool const has_all_resouces = std::apply([](auto const&... xs) {
-            return (if_optional_check_value(xs) && ...);
-        }, args);
+        std::apply([](auto const&... xs) { (if_optional_check_value(xs), ...); }, args);
 
-        if (has_all_resouces) {
-            std::apply([func](auto&&... xs) { (*func)(unwrap_optional(FWD(xs))...); }, MOV(args));
-        }
+        std::apply([func](auto&&... xs) { (*func)(unwrap_optional(FWD(xs))...); }, MOV(args));
     }
 
     // type erased system function that reinterprets the function pointer to the original type

@@ -85,7 +85,7 @@ template <typename Tpl = std::tuple<>>
 #ifdef IS_DEBUG
     #include <cassert>
     #define DEBUG_ASSERT(x, ...) \
-        if (!static_cast<bool>(x)) { \
+        if (!static_cast<bool>(x)) [[unlikely]] { \
             panic(__VA_ARGS__); \
         }
     #define DEBUG_ASSERT_EQ(x, y, ...) DEBUG_ASSERT((x == y), __VA_ARGS__)
