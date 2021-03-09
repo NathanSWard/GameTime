@@ -14,14 +14,6 @@ namespace {
         Sprite const& sprite,
         Transform const& tform)
     {
-        unsigned int flip = SDL_FLIP_NONE;
-        if (sprite.flip_x) {
-            flip |= SDL_FLIP_VERTICAL;
-        }
-        if (sprite.flip_y) {
-            flip |= SDL_FLIP_HORIZONTAL;
-        }
-
         auto dstrect = SDL_FRect{
             .x = tform.translation.x(),
             .y = tform.translation.y(),
@@ -36,7 +28,7 @@ namespace {
             &dstrect,
             tform.rotation,
             nullptr,
-            static_cast<SDL_RendererFlip>(flip));
+            static_cast<SDL_RendererFlip>(sprite.flip_state));
     }
 
 } // namespace

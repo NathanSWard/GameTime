@@ -9,11 +9,18 @@
 #include <core/assets/handle.hpp>
 #include <tl/optional.hpp>
 
+enum class FlipState
+{
+    None = SDL_FLIP_NONE,
+    FlipX = SDL_FLIP_HORIZONTAL,
+    FlipY = SDL_FLIP_VERTICAL,
+    FlipXY = FlipX | FlipY,
+};
+
 struct Sprite
 {
     Vec2 size;
-    bool flip_x = false;
-    bool flip_y = false;
+    FlipState flip_state = FlipState::None;
 };
 
 // TODO: Possibly wrap Handle<Texture> & Color in their own structs
