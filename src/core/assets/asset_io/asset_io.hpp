@@ -32,7 +32,7 @@ struct AssetIo
     virtual auto read_directory(std::filesystem::path const& dir) const noexcept -> tl::expected<std::filesystem::directory_iterator, std::error_code>
     {
         std::error_code ec{};
-        auto dir_iter = std::filesystem::directory_iterator(dir, ec);
+        auto dir_iter = std::filesystem::directory_iterator(root_path() / dir, ec);
         if (ec != std::error_code{}) {
             return tl::make_unexpected(ec);
         }

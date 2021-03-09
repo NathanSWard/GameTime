@@ -26,11 +26,11 @@ void sdl_img_loader_test()
         auto const io = FileAssetIo("assets");
 
         should("load png") = [&] {
-            auto bytes = io.load_path("png-image.png")();
+            auto bytes = io.load_path("pngs/png-image.png")();
             expect((bytes.has_value()) >> fatal);
 
-            auto const path = fs::path{ "assets" } / fs::path{ "png-image.png" };
-            auto const png = loader.load(path.string(), *bytes);
+            auto const path = fs::path{ "assets/pngs/png-image.png" };
+            auto const png = loader.load(path, *bytes);
             expect((png.has_value()) >> fatal);
             expect(png->type_id() == type_id<Texture>());
         };
