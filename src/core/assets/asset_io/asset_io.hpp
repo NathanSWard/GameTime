@@ -20,8 +20,24 @@ struct AssetIo
 
     // TODO: This should probably return a std::function<Result(std::string_view)>
     //       Or maybe a boost::future??
-    virtual auto load_path(std::string_view path) const -> std::function<Result()> = 0;
+    virtual auto load_path(std::filesystem::path const& path) const -> std::function<Result()> = 0;
     virtual auto root_path() const noexcept -> std::filesystem::path = 0;
+
+    virtual auto is_directory(std::filesystem::path const& path) const noexcept -> bool 
+    {
+        std::error_code ec{};
+        return std::filesystem::is_directory(path, ec);
+    }
+
+    virtual auto read_directory(std::filesystem::path const& dir) const noexcept -> tl::expected<std::filesystem::directory_iterator, std::error_code>
+    {
+        std::error_code ec{};
+        auto dir_iter = std::filesystem::directory_iterator(dir, ec);
+        if (ec != std::error_code{}) {
+            return tl::make_unexpected(ec);
+        }
+        return dir_iter;
+    }
 };
 
 template <typename T>

@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <string_view>
 #include <tl/expected.hpp>
@@ -37,7 +38,7 @@ enum class LoadState
 
 struct AssetInfo
 {
-    std::string             path;
+    std::filesystem::path   path;
     LoadState               load_state = LoadState::NotLoaded;
     tl::optional<type_id_t> type_id;
     std::size_t             version = 0;
@@ -79,6 +80,7 @@ public:
         IncorrectHandleType,
         AssetLoaderError,
         AssetIoError,
+        AssetFolderNotADirectory,
     };
 
     template <typename T>
@@ -133,10 +135,10 @@ public:
         return {};
     }
 
-    [[nodiscard]] auto get_asset_loader_from_path(std::string_view const path) const -> tl::optional<std::shared_ptr<AssetLoader>>
+    [[nodiscard]] auto get_asset_loader_from_path(std::filesystem::path const& path) const -> tl::optional<std::shared_ptr<AssetLoader>>
     {
         // TODO: not the most efficent :(
-        auto filename = std::filesystem::path(path.begin(), path.end()).filename().string();
+        auto filename = path.filename().string();
         if (filename.empty()) {
             return {};
         }
@@ -176,7 +178,7 @@ public:
     }
 
     // TODO: Make async??
-    [[nodiscard]] auto load_sync(std::string_view const path) const -> AssetServerResult<AssetPathId>
+    [[nodiscard]] auto load_sync(std::filesystem::path const& path) const -> AssetServerResult<AssetPathId>
     {
         auto loader = get_asset_loader_from_path(path);
         if (!loader) {
@@ -192,7 +194,7 @@ public:
                 asset_info->emplace(std::piecewise_construct,
                     std::forward_as_tuple(path_id), 
                     std::forward_as_tuple( // AssetPathInfo
-                        std::string{ path }, // path
+                        path, // path
                         LoadState::NotLoaded, // load_state
                         tl::nullopt, // type_id
                         0 // version
@@ -262,26 +264,61 @@ public:
         return path_id;
     }
 
-    [[nodiscard]] auto load_untracked(std::string_view const path) const -> HandleId
+    [[nodiscard]] auto load_untracked(std::filesystem::path const& path) const -> HandleId
     {
         // TODO: Revamp TaskPool to return a `future` like object
-         m_internal->task_pool.execute([server = *this, path = std::string(path)]{
+         m_internal->task_pool.execute([server = *this, path = path]{
             if (auto const result = server.load_sync(path); !result) {
-                ;// LOG THE ERROR!!!
+                spdlog::error("AssetServer failed to load assets: '{}'", path.string());
             }
             });
         return HandleId::from_path(path);
     }
 
-    [[nodiscard]] auto load_untyped(std::string_view const path) const -> UntypedHandle
+    [[nodiscard]] auto load_untyped(std::filesystem::path const& path) const -> UntypedHandle
     {
         return UntypedHandle{ load_untracked(path) };
     }
 
     template <typename T>
-    [[nodiscard]] auto load(std::string_view const path) const -> Handle<T>
+    [[nodiscard]] auto load(std::filesystem::path const& path) const -> Handle<T>
     {
         return *load_untyped(path).typed<T>();
+    }
+
+    [[nodiscard]] auto load_folder(std::filesystem::path const& dir) const -> tl::expected<std::vector<UntypedHandle>, Error>
+    {
+        if (!m_internal->asset_io->is_directory(dir)) {
+            return tl::make_unexpected(AssetFolderNotADirectory);
+        }
+
+        auto handles = std::vector<UntypedHandle>{};
+        auto iter = m_internal->asset_io->read_directory(dir);
+        if (!iter) {
+            return tl::make_unexpected(AssetIoError);
+        }
+
+        for (auto const& child_path : *iter) {
+            if (m_internal->asset_io->is_directory(child_path.path())) {
+                auto inner_handles = load_folder(child_path);
+                if (!inner_handles) {
+                    return tl::make_unexpected(inner_handles.error());
+                }
+                handles.insert(
+                    handles.end(),
+                    std::make_move_iterator(inner_handles->begin()),
+                    std::make_move_iterator(inner_handles->end())
+                );
+            }
+            else {
+                if (!get_asset_loader_from_path(child_path.path().string()).has_value()) {
+                    continue;
+                }
+                handles.emplace_back(load_untyped(child_path));
+            }
+        }
+
+        return handles;
     }
 
     template <typename T>

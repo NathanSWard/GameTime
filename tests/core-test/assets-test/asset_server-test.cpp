@@ -8,7 +8,7 @@ std::vector<std::byte> const gbytes = std::vector{ 10, std::byte{} };
 
 struct TestAssetIo final : public AssetIo
 {
-    auto load_path(std::string_view) const -> std::function<Result()> final
+    auto load_path(std::filesystem::path const&) const -> std::function<Result()> final
     {
         return []() -> Result { return gbytes; };
     }
@@ -18,7 +18,7 @@ struct TestAssetIo final : public AssetIo
 
 struct FailingTestAssetIo final : public AssetIo
 {
-    auto load_path(std::string_view) const -> std::function<Result()> final
+    auto load_path(std::filesystem::path const&) const -> std::function<Result()> final
     {
         return []() -> Result { return tl::make_unexpected(Error::IoError); };
     }
@@ -42,7 +42,7 @@ struct TestAssetLoader final : AssetLoader
         return std::span{ exts.data(), 1 };
     }
 
-    auto load(std::string_view path, std::span<std::byte> bytes) const -> tl::optional<LoadedAsset> final
+    auto load(std::filesystem::path const&, std::span<std::byte> bytes) const -> tl::optional<LoadedAsset> final
     {
         ++times_loaded;
         return LoadedAsset::create<TestAsset>();
@@ -58,7 +58,7 @@ struct FailingTestAssetLoader final : AssetLoader
         return std::span{ exts.data(), 1 };
     }
 
-    auto load(std::string_view path, std::span<std::byte> bytes) const -> tl::optional<LoadedAsset> final
+    auto load(std::filesystem::path const&, std::span<std::byte> bytes) const -> tl::optional<LoadedAsset> final
     {
         return tl::nullopt;
     }

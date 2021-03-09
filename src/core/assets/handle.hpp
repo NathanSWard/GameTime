@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bit>
+#include <filesystem>
 #include <functional>
 #include <util/common.hpp>
 #include <tl/optional.hpp>
@@ -51,9 +52,10 @@ public:
     constexpr HandleId& operator=(HandleId&&) noexcept = default;
     constexpr HandleId& operator=(HandleId const&) noexcept = default;
 
-    [[nodiscard]] constexpr static auto from_path(std::string_view const path) -> HandleId
+    [[nodiscard]] static auto from_path(std::filesystem::path const& path) -> HandleId
     {
-        return HandleId(static_cast<std::uint64_t>(std::hash<std::string_view>{}(path)));
+        auto const hash = std::filesystem::hash_value(path);
+        return HandleId(static_cast<AssetPathId>(hash));
     }
 
     template <typename T>

@@ -13,7 +13,7 @@ struct SDL_IMG_Loader final : public AssetLoader
         return std::span<std::string_view const>{ exts.data(), exts.size() };
     }
     
-    auto load(std::string_view, std::span<std::byte> const bytes) const -> tl::optional<LoadedAsset>
+    auto load(std::filesystem::path const&, std::span<std::byte> const bytes) const -> tl::optional<LoadedAsset>
     {
         auto* const surface = IMG_Load_RW(SDL_RWFromMem(bytes.data(), static_cast<int>(bytes.size())), 1);
         if (surface == nullptr) {

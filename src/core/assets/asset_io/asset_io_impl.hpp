@@ -15,9 +15,9 @@ public:
         : m_root_path(MOV(root_path))
     {}
 
-    auto load_path(std::string_view const path) const -> std::function<Result()> final
+    auto load_path(std::filesystem::path const& path) const -> std::function<Result()> final
     {
-        auto const full_path = m_root_path / std::filesystem::path{ path };
+        auto const full_path = m_root_path / path;
         return [path = MOV(full_path)] () -> Result {
             FILE* file = nullptr;
             auto const err = fopen_s(&file, path.string().c_str(), "rb");
