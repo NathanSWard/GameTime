@@ -37,3 +37,11 @@ target_link_libraries(${EXECUTABLE_NAME} PRIVATE tl::optional)
 # eigen3
 find_package(eigen3 CONFIG REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE Eigen3::Eigen)
+
+# libsndfile
+find_package(SndFile CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE SndFile::sndfile)
+
+# openal-soft
+find_package(OpenAL CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE OpenAL::OpenAL)

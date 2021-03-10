@@ -37,16 +37,6 @@ namespace sdl {
     };
 
     namespace img {
-        struct Error {
-            std::string_view msg;
-
-            static auto current() noexcept -> Error {
-                return Error{
-                    .msg = IMG_GetError(),
-                };
-            }
-        };
-
         class Context {
             bool m_ok = true;
 
@@ -56,9 +46,9 @@ namespace sdl {
             Context(Context const&) = delete;
             constexpr Context(Context&& other) noexcept : m_ok(std::exchange(other.m_ok, false)) {}
 
-            static auto create(std::uint32_t const flags) noexcept -> tl::expected<Context, Error> {
+            static auto create(std::uint32_t const flags) noexcept -> tl::expected<Context, sdl::Error> {
                 if (IMG_Init(flags) < 0) {
-                    return tl::make_unexpected(Error::current());
+                    return tl::make_unexpected(Error{ .msg = IMG_GetError() });
                 }
                 return Context{};
             }

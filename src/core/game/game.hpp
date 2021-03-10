@@ -183,7 +183,7 @@ public:
     template <typename T>
     auto add_asset() -> GameBuilder&
     {
-        DEBUG_ASSERT(resources().contains_resource<AssetServer>());
+        DEBUG_ASSERT(resources().contains_resource<AssetServer>(), "AssetServer does not yet exist.");
         auto server = *(resources().get_resource<AssetServer>());
         set_resource<Assets<T>>(server->register_asset_type<T>())
             .add_system_to_stage<AssetStage::LoadAssets>(update_assets_system<T>)
@@ -195,7 +195,7 @@ public:
     template <typename T, typename... Args>
     auto add_asset_loader(Args&&... args) -> GameBuilder&
     {
-        DEBUG_ASSERT(resources().contains_resource<AssetServer>());
+        DEBUG_ASSERT(resources().contains_resource<AssetServer>(), "AssetServer does not yet exist.");
         auto server = *(resources().get_resource<AssetServer>());
         server->add_asset_loader<T>(FWD(args)...);
         return *this;

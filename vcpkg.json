@@ -5,6 +5,8 @@
     "entt",
     "eigen3",
     "fmt",
+    "libsndfile",
+    "openal-soft",
     "sdl2",
     "sdl2-image",
     "spdlog",

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <core/assets/plugin.hpp>
+#include <core/audio/plugin.hpp>
 #include <core/game/game.hpp>
 #include <core/input/plugin.hpp>
 #include <core/render/plugin.hpp>
@@ -18,6 +19,7 @@ struct DefaultPlugins
             .add_plugin(WindowPlugin{})
             .add_plugin(SDLPlugin{})
             .add_plugin(RenderPlugin{})
-            .add_plugin(SpritePlugin{});
+            .add_plugin(SpritePlugin{})
+            .add_plugin(AudioPlugin{});
     }
 };
