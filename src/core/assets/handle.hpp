@@ -2,6 +2,7 @@
 
 #include <bit>
 #include <filesystem>
+#include <fmt/format.h>
 #include <functional>
 #include <util/common.hpp>
 #include <tl/optional.hpp>
@@ -35,6 +36,7 @@ private:
     friend class UntypedHandle;
     friend struct std::hash<HandleId>;
     friend class AssetServer;
+    friend struct fmt::formatter<HandleId>;
 
 public:
     constexpr explicit HandleId(AssetPathId const path_id) noexcept
@@ -142,3 +144,20 @@ template <typename T>
 {
     return UntypedHandle{ m_id };
 }
+
+// format specifiers
+
+template <>
+struct fmt::formatter<HandleId> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(HandleId const& hid, Ctx& ctx) {
+        if (hid.m_is_path_id) {
+            return format_to(ctx.out(), "HandleId::AssetPathId({})", hid.m_path_id);
+        }
+        else {
+            return format_to(ctx.out(), "HandleId::Uid(id: {}, type_id: {})", hid.m_uid.id, hid.m_uid.type_id);
+        }
+    }
+};
