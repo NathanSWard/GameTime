@@ -65,7 +65,7 @@ namespace internal {
     constexpr void if_optional_check_value(O const& opt)
     {
         // TODO: perhaps panic in release mode as well?
-        DEBUG_ASSERT(opt.has_value(), "System was unable to find: '{}'.", panic_args(type_name<typename O::value_type>()));
+        DEBUG_ASSERT(opt.has_value(), "System was unable to find: '{}'.", type_name<typename O::value_type>());
         UNUSED(opt);
     }
 
@@ -152,7 +152,7 @@ namespace internal {
         auto operator()(SystemSettings const& settings, Resources& res, World&) const -> EventReader<T>
         {
             auto events = res.get_resource<Events<T> const>();
-            DEBUG_ASSERT(events.has_value());
+            DEBUG_ASSERT(events.has_value(), "Events<{}> does not exist.", type_name<T>());
 
             using count_t = typename EventReader<T>::EventCount;
             auto const local = res.local().try_add_local_resource<count_t>(settings.id(), count_t{ 1 });

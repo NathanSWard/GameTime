@@ -117,7 +117,7 @@ public:
         : m_value(
 #ifdef ISDEBUG
             [&] {
-                DEBUG_ASSERT(other.m_mutex.try_lock());
+                DEBUG_ASSERT(other.m_mutex.try_lock(), "Cannot move a RwLock when it is locked.");
                 other.m_mutex.unlock();
                 return MOV(other.m_value);
             }()

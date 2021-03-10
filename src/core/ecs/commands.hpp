@@ -74,7 +74,7 @@ public:
     template <typename T, typename... Args>
     auto add_component(Args&&... args) -> Commands&
     {
-        DEBUG_ASSERT(m_curr_entity != null_entity, "`Commands` does not contain a vlail entity. Consider using `spawn()` to set one.");
+        DEBUG_ASSERT(m_curr_entity != null_entity, "`Commands` does not contain a valid entity. Consider using `spawn()` to set one.");
         m_world->emplace<T>(m_curr_entity, FWD(args)...);
         return *this;
     }

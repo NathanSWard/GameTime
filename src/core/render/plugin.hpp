@@ -29,13 +29,13 @@ struct RenderPlugin
 
         auto window = resources.get_resource<Window>();
         if (!window) {
-            panic("RenderPlugin requires `Window` resource to exist.");
+            PANIC("RenderPlugin requires `Window` resource to exist.");
             return;
         }
 
         auto rctx = RenderContext::create(rctx_settings, **window);
         if (!rctx) {
-            panic("RenderContext failed to initialize. Error: {}", panic_args(rctx.error().msg));
+            PANIC("RenderContext failed to initialize. Error: {}", rctx.error().msg);
             return;
         }
 

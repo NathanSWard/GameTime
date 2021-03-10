@@ -83,7 +83,7 @@ class Scheduler
     static auto add_system_to_stage_impl(std::vector<std::unique_ptr<Stage>>& stages, F&& f) -> SystemId
     {
         auto const iter = std::ranges::find(std::as_const(stages), StageId::create<StageTag>(), extract_stage_id);
-        DEBUG_ASSERT(iter != stages.end());
+        DEBUG_ASSERT(iter != stages.end(), "Cannot add system to stage '{}' as the stage does not exist.", type_name<StageTag>());
 
         auto system = System::create(FWD(f));
         auto const id = system.id();
@@ -95,7 +95,10 @@ class Scheduler
     template <typename NewStage>
     static auto add_stage_impl(std::vector<std::unique_ptr<Stage>>& stages) -> StageId
     {
-        DEBUG_ASSERT(std::ranges::find(std::as_const(stages), StageId::create<NewStage>(), extract_stage_id) == stages.end());
+        DEBUG_ASSERT(
+            std::ranges::find(std::as_const(stages), StageId::create<NewStage>(), extract_stage_id) == stages.end(), 
+            "Stage '{}' already exists.", 
+            type_name<NewStage>());
         return stages.emplace_back(std::make_unique<Stage>(Stage::create<NewStage>()))->id();
     }
 
@@ -103,7 +106,12 @@ class Scheduler
     static auto add_stage_before_impl(std::vector<std::unique_ptr<Stage>>& stages) -> StageId
     {
         auto const iter = std::ranges::find(std::as_const(stages), StageId::create<StageBefore>(), extract_stage_id);
-        DEBUG_ASSERT(iter != stages.cend());
+        DEBUG_ASSERT(
+            iter != stages.cend(), 
+            "Cannot add stage '{}' before '{}', as '{}' does not exist", 
+            type_name<NewStage>(), 
+            type_name<StageBefore>(), 
+            type_name<StageBefore>());
         return (*stages.insert(iter, std::make_unique<Stage>(Stage::create<NewStage>())))->id();
     }
 
@@ -111,7 +119,12 @@ class Scheduler
     static auto add_stage_after_impl(std::vector<std::unique_ptr<Stage>>& stages) -> StageId
     {
         auto const iter = std::ranges::find(std::as_const(stages), StageId::create<StageAfter>(), extract_stage_id);
-        DEBUG_ASSERT(iter != stages.cend());
+        DEBUG_ASSERT(
+            iter != stages.cend(),
+            "Cannot add stage '{}' after '{}', as '{}' does not exist",
+            type_name<NewStage>(),
+            type_name<StageAfter>(),
+            type_name<StageAfter>());
         return (*stages.insert(std::next(iter), std::make_unique<Stage>(Stage::create<NewStage>())))->id();
     }
 

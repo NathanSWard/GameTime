@@ -21,19 +21,19 @@ struct SDLPlugin
 
         auto sdl_ctx = sdl::Context::create(SDL_INIT_EVERYTHING);
         if (!sdl_ctx) {
-            panic("SDL2 failed. Error: {}", panic_args(sdl_ctx.error().msg));
+            PANIC("SDL2 failed. Error: {}", sdl_ctx.error().msg);
         }
 
         auto img_ctx = sdl::img::Context::create(IMG_INIT_PNG);
         if (!img_ctx) {
-            panic("SDL2_image failed. Error: {}", panic_args(img_ctx.error().msg));
+            PANIC("SDL2_image failed. Error: {}", img_ctx.error().msg);
         }
 
         builder.set_resource<SDLContext>(*MOV(sdl_ctx), *MOV(img_ctx));
 
         auto server = builder.resources().get_resource<AssetServer>();
         if (!server) {
-            panic("SDLPlugin requires the `AssetServer` resource");
+            PANIC("SDLPlugin requires the `AssetServer` resource");
         }
         (*server)->add_asset_loader<SDL_IMG_Loader>();
 

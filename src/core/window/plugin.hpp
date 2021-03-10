@@ -31,7 +31,7 @@ struct WindowPlugin
 
         auto window = Window::create(window_settings);
         if (!window) {
-            panic("Window failed to initialize! Error: {}", panic_args(window.error().msg));
+            PANIC("Window failed to initialize! Error: {}", window.error().msg);
             return;
         }
 

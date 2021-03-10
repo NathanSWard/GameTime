@@ -77,21 +77,75 @@ template <typename Tpl = std::tuple<>>
     std::abort();
 }
 
+#define PANIC(fmt, ...) panic(fmt, panic_args(__VA_ARGS__))
+
 #ifndef NDEBUG
     #define IS_DEBUG
 #endif
 
 // DEBUG_ASSERT
 #ifdef IS_DEBUG
-    #include <cassert>
-    #define DEBUG_ASSERT(x, ...) \
+    #define DEBUG_ASSERT(x, fmt, ...) \
         if (!static_cast<bool>(x)) [[unlikely]] { \
-            panic(__VA_ARGS__); \
+            PANIC(fmt, __VA_ARGS__); \
         }
-    #define DEBUG_ASSERT_EQ(x, y, ...) DEBUG_ASSERT((x == y), __VA_ARGS__)
-    #define DEBUG_ASSERT_NEQ(x, y, ...) DEBUG_ASSERT((x != y), __VA_ARGS__)
 #else
     #define DEBUG_ASSERT(...)
-    #define DEBUG_ASSERT_EQ(...)
-    #define DEBUG_ASSERT_NEQ(...)
 #endif
+
+
+// LOGGING
+
+#include <spdlog/spdlog.h>
+
+struct LogLevel
+{
+    enum level_enum {
+        Trace = 0,
+        Debug = 1,
+        Info = 2,
+        Warn = 3,
+        Error = 4,
+        Critical = 5,
+    };
+
+    static constexpr char const* level_name[] = { "Trace", "Debug", "Info", "Warn", "Error", "Critical" };
+
+    constexpr static auto to_string(level_enum const level) noexcept -> std::string_view
+    {
+        switch (level) {
+            case LogLevel::Trace: [[fallthrough]];
+            case LogLevel::Debug: [[fallthrough]];
+            case LogLevel::Info: [[fallthrough]];
+            case LogLevel::Warn: [[fallthrough]];
+            case LogLevel::Error: [[fallthrough]];
+            case LogLevel::Critical: 
+                return level_name[static_cast<std::size_t>(level)];
+            default: 
+                return "unknown log level";
+        };
+    }
+};
+
+inline void set_log_level(LogLevel::level_enum const level)
+{
+    auto const spd_log_level = [level] {
+        switch (level) {
+        case LogLevel::Trace: return spdlog::level::trace;
+        case LogLevel::Debug: return spdlog::level::debug;
+        case LogLevel::Info: return spdlog::level::info;
+        case LogLevel::Warn: return spdlog::level::warn;
+        case LogLevel::Error: return spdlog::level::err;
+        case LogLevel::Critical: return spdlog::level::critical;
+        };
+    }();
+
+    spdlog::set_level(spd_log_level);
+}
+
+#define LOG_CRITICAL(fmt, ...) spdlog::critical(fmt, __VA_ARGS__)
+#define LOG_ERROR(fmt, ...) spdlog::error(fmt, __VA_ARGS__)
+#define LOG_WARN(fmt, ...) spdlog::warn(fmt, __VA_ARGS__)
+#define LOG_INFO(fmt, ...) spdlog::info(fmt, __VA_ARGS__)
+#define LOG_DEBUG(fmt, ...) spdlog::debug(fmt, __VA_ARGS__)
+#define LOG_TRACE(fmt, ...) spdlog::trace(fmt, __VA_ARGS__)

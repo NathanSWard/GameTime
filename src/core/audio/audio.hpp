@@ -102,7 +102,7 @@ struct Audio
 
 struct AudioOutputSettings
 {
-    std::uint8_t max_simultaneous_sounds = 16;
+    std::uint8_t max_channels = 16;
 };
 
 class AudioOutput
@@ -132,11 +132,11 @@ public:
 
     static auto create(AudioOutputSettings const& settings) -> tl::optional<AudioOutput>
     {
-        auto sources = std::vector<ALuint>(settings.max_simultaneous_sounds);
+        auto sources = std::vector<ALuint>(settings.max_channels);
         alGenSources(static_cast<ALsizei>(sources.size()), sources.data());
 
         if (auto const error = alGetError(); error != AL_NO_ERROR) {
-            spdlog::error("Unable to create Audio. Error: {}", error);
+            LOG_ERROR("Unable to cerate Audio Channel. Error: {}", error);
             return {};
         }
 

@@ -90,7 +90,7 @@ public:
     AssetServer(std::unique_ptr<AIo> asset_io, TaskPool taskpool) noexcept
         : m_internal(std::make_shared<AssetServerInternal>(MOV(asset_io), MOV(taskpool)))
     {
-        DEBUG_ASSERT(m_internal->asset_io != nullptr);
+        DEBUG_ASSERT(m_internal->asset_io != nullptr, "AssetServer asset_io cannot be null");
     }
 
     AssetServer(AssetServer&&) noexcept = default;
@@ -215,7 +215,7 @@ public:
         auto set_load_state = [&](LoadState const state) {
             auto asset_info = m_internal->asset_info.write();
             auto info = asset_info->find(path_id);
-            DEBUG_ASSERT(info != asset_info->end());
+            DEBUG_ASSERT(info != asset_info->end(), "Unable to find path_id: {}", path_id);
             info->second.load_state = state;
         };
 
@@ -238,7 +238,7 @@ public:
         {
             auto asset_info = m_internal->asset_info.write();
             auto info = asset_info->find(path_id);
-            DEBUG_ASSERT(info != asset_info->end());
+            DEBUG_ASSERT(info != asset_info->end(), "Unable to find path_id: {}", path_id);
 
             if (version != info->second.version) {
                 return path_id;

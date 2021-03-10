@@ -10,7 +10,7 @@ struct AudioPlugin
     {
         auto context = AudioContext::create();
         if (!context) {
-            panic("AudioContext failed to initialize");
+            PANIC("AudioContext failed to initialize");
             return;
         }
 
@@ -22,7 +22,7 @@ struct AudioPlugin
 
         auto audio_output = AudioOutput::create(audio_output_settings);
         if (!audio_output) {
-            panic("AudioOuput failed to initialize");
+            PANIC("AudioOuput failed to initialize");
             return;
         }
 
