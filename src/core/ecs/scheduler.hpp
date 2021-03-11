@@ -25,7 +25,7 @@ struct StageId
     template <typename StageTag>
     constexpr static auto create() -> StageId
     {
-        return StageId{ type_id<StageTag>() };
+        return StageId{ type_id<std::remove_cvref_t<StageTag>>() };
     }
 
     constexpr auto operator==(StageId const& rhs) const noexcept -> bool
