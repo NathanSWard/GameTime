@@ -33,7 +33,7 @@ public:
 
     constexpr auto operator==(type_id_t const& other) const noexcept -> bool
     {
-        return m_hash == other.m_hash && m_name == other.m_name;
+        return m_hash == other.m_hash && m_name.data() == other.m_name.data();
     }
 
     constexpr auto operator!=(type_id_t const& other) const noexcept -> bool

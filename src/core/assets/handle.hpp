@@ -4,9 +4,11 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <functional>
+#include <memory>
 #include <util/common.hpp>
 #include <tl/optional.hpp>
 #include <util/rng.hpp>
+#include <util/sync/mpmc.hpp>
 #include <debug/debug.hpp>
 
 template <typename T>
@@ -21,7 +23,7 @@ class HandleId
 public:
     struct Uid {
         std::uint64_t id;
-        type_id_t   type_id;
+        type_id_t type_id;
     };
 
 private:
@@ -68,6 +70,25 @@ public:
             .type_id = type_id<T>()
             });
     }
+
+    [[nodiscard]] constexpr auto operator==(HandleId const& other) const noexcept -> bool
+    {
+        if (m_is_path_id != other.m_is_path_id) {
+            return false;
+        }
+
+        if (m_is_path_id) {
+            return m_path_id == other.m_path_id;
+        }
+        else {
+            return m_uid.id == other.m_uid.id && m_uid.type_id == other.m_uid.type_id;
+        }
+    }
+
+    [[nodiscard]] constexpr auto operator!=(HandleId const& other) const noexcept -> bool
+    {
+        return !(*this == other);
+    }
 };
 
 namespace {
@@ -75,16 +96,6 @@ namespace {
     {
         return std::bit_cast<std::array<char, sizeof(HandleId)>>(id);
     }
-} // namespace
-
-[[nodiscard]] constexpr auto operator==(HandleId const& lhs, HandleId const& rhs) noexcept -> bool
-{
-    return to_bytes(lhs) == to_bytes(rhs);
-}
-
-[[nodiscard]] constexpr auto operator!=(HandleId const& lhs, HandleId const& rhs) noexcept -> bool
-{
-    return !(lhs == rhs);
 }
 
 template <>
@@ -98,51 +109,180 @@ struct std::hash<HandleId>
     }
 };
 
+namespace detail {
+
+    struct RefChange
+    {
+        enum Type : bool { Increment, Decrement } type = Increment;
+        HandleId id = HandleId(AssetPathId(0));
+
+        [[nodiscard]] constexpr static auto increment(HandleId const id) noexcept -> RefChange
+        {
+            return RefChange{ .type = Increment, .id = id };
+        }
+
+        [[nodiscard]] constexpr static auto decrement(HandleId const id) noexcept -> RefChange
+        {
+            return RefChange{ .type = Decrement, .id = id };
+        }
+    };
+
+}
+
 template <typename T>
 class Handle 
 {
     HandleId m_id;
+    tl::optional<Sender<detail::RefChange>> m_sender;
+
+    constexpr Handle(HandleId const id) noexcept : m_id(id) {}
+    Handle(HandleId const id, Sender<detail::RefChange>&& sender) noexcept
+        : m_id(id)
+        , m_sender(MOV(sender))
+    {}
 
 public:
-    constexpr Handle(HandleId id) noexcept : m_id(id) {}
-
     constexpr Handle(Handle&&) noexcept = default;
     constexpr Handle& operator=(Handle&&) noexcept = default;
 
+    ~Handle()
+    {
+        if (m_sender.has_value()) {
+            m_sender->send(detail::RefChange::decrement(m_id));
+        }
+    }
+
+    // implicit conversion to a HandleId
+    constexpr operator HandleId() const noexcept { return m_id; }
+
+    [[nodiscard]] static auto weak(HandleId const id) -> Handle
+    {
+        return Handle(id);
+    }
+
+    [[nodiscard]] static auto strong(HandleId const id, Sender<detail::RefChange> sender) -> Handle
+    {
+        sender.send(detail::RefChange::increment(id));
+        return Handle(id, MOV(sender));
+    }
+
     [[nodiscard]] auto id() const noexcept -> HandleId { return m_id; }
-    [[nodiscard]] constexpr auto untyped() const noexcept -> UntypedHandle;
+
+    [[nodiscard]] constexpr auto is_weak() const noexcept -> bool { return !m_sender.has_value(); }
+    [[nodiscard]] constexpr auto is_strong() const noexcept -> bool { return m_sender.has_value(); }
+
+    [[nodiscard]] auto copy() const noexcept -> Handle<T>
+    {
+        if (is_strong()) {
+            return Handle<T>::strong(m_id, *m_sender);
+        }
+        else {
+            returrn Handle<T>::weak(m_id);
+        }
+    }
+
+    [[nodiscard]] auto copy_weak() const noexcept -> Handle<T>
+    {
+        return Handle<T>::weak(m_id);
+    }
+
+    [[nodiscard]] auto untyped() const noexcept -> UntypedHandle;
+    [[nodiscard]] constexpr auto weak_untyped() const noexcept -> UntypedHandle;
 };
 
 class UntypedHandle
 {
     HandleId m_id;
+    tl::optional<Sender<detail::RefChange>> m_sender;
 
-public:
-    constexpr UntypedHandle(HandleId id) noexcept
+    constexpr UntypedHandle(HandleId const id) noexcept
         : m_id(id)
     {}
 
+    UntypedHandle(HandleId const id, Sender<detail::RefChange>&& sender) noexcept
+        : m_id(id)
+        , m_sender(MOV(sender))
+    {}
+
+public:
+    constexpr UntypedHandle(UntypedHandle&&) noexcept = default;
+    constexpr UntypedHandle& operator=(UntypedHandle&&) noexcept = default;
+
+    ~UntypedHandle()
+    {
+        if (m_sender.has_value()) {
+            m_sender->send(detail::RefChange::decrement());
+        }
+    }
+
+    // implicit conversion to a HandleId
+    constexpr operator HandleId() const noexcept { return m_id; }
+
+    [[nodiscard]] static auto weak(HandleId const id) -> UntypedHandle
+    {
+        return UntypedHandle(id);
+    }
+
+    [[nodiscard]] static auto strong(HandleId const id, Sender<detail::RefChange> sender) -> UntypedHandle
+    {
+        sender.send(detail::RefChange::increment(id));
+        return UntypedHandle(id, MOV(sender));
+    }
+
     [[nodiscard]] auto id() const noexcept -> HandleId { return m_id; }
 
-    template <typename T>
-    [[nodiscard]] constexpr auto typed() const noexcept -> tl::optional<Handle<T>>
+    [[nodiscard]] constexpr auto is_weak() const noexcept -> bool { return !m_sender.has_value(); }
+    [[nodiscard]] constexpr auto is_strong() const noexcept -> bool { return m_sender.has_value(); }
+
+    [[nodiscard]] auto copy() const noexcept -> UntypedHandle
     {
-        if (m_id.m_is_path_id) {
-            return Handle<T>{ m_id };
+        if (is_strong()) {
+            return UntypedHandle::strong(m_id, *m_sender);
         }
-        else { // is uid
-            if (m_id.m_uid.type_id == type_id<T>()) {
-                return Handle<T>{ m_id };
+        else {
+            return UntypedHandle::weak(m_id);
+        }
+    }
+
+    [[nodiscard]] auto copy_weak() const noexcept -> UntypedHandle
+    {
+        return UntypedHandle::weak(m_id);
+    }
+
+    template <typename T>
+    [[nodiscard]] constexpr auto typed() && -> Handle<T>
+    {
+        if (!m_id.m_is_path_id) {
+            if (m_id.m_uid.type_id != type_id<T>()) [[unlikely]] {
+                PANIC("Attempted to convert UntypedHandle to invalid type.");
             }
         }
-        return {};
+
+        auto sender = m_sender.take();
+        if (sender) {
+            return Handle<T>::strong(m_id, *MOV(sender));
+        }
+        else {
+            return Handle<T>::weak(m_id);
+        }
     }
 };
 
 template <typename T>
-[[nodiscard]] constexpr auto Handle<T>::untyped() const noexcept -> UntypedHandle
+[[nodiscard]] auto Handle<T>::untyped() const noexcept -> UntypedHandle
 {
-    return UntypedHandle{ m_id };
+    if (is_strong()) {
+        return UntypedHandle::strong(m_id, *m_sender);
+    }
+    else {
+        return UntypedHandle::weak(m_id);
+    }
+}
+
+template <typename T>
+[[nodiscard]] constexpr auto Handle<T>::weak_untyped() const noexcept -> UntypedHandle
+{
+    return UntypedHandle(m_id);
 }
 
 // format specifiers

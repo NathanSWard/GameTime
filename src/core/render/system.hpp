@@ -43,7 +43,7 @@ void render_draw_system(
     SDL_RenderClear(ctx->raw());
 
     sprites_to_draw.each([&](Sprite const& sprite, Handle<Texture> const& thandle, Transform const& tform) {
-        auto texture = textures->get_asset(thandle);
+        auto texture = textures->get_mut_asset_untracked(thandle);
         if (!texture) {
             return;
         }
@@ -53,7 +53,7 @@ void render_draw_system(
 
 
     colored_sprites_to_draw.each([&](Sprite const& sprite, Handle<Texture> const& thandle, Transform const& tform, Color const& color) {
-        auto texture = textures->get_asset(thandle);
+        auto texture = textures->get_mut_asset_untracked(thandle);
         if (!texture) {
             return;
         }

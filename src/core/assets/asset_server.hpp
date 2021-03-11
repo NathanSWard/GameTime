@@ -23,7 +23,7 @@
 namespace AssetStage {
 
     struct LoadAssets {};
-    // TODO: struct AssetEvents {};
+    struct AssetEvents {};
 
 } // AssetStage
 

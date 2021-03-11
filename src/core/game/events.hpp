@@ -2,6 +2,7 @@
 
 #include <debug/debug.hpp>
 #include <core/ecs/resource.hpp>
+#include <iterator>
 #include <util/common.hpp>
 #include <util/ranges/chain.hpp>
 #include <ranges>
@@ -109,6 +110,16 @@ public:
         }
 
         ++m_event_count;
+    }
+
+    template <typename It, typename Sent>
+    requires std::sentinel_for<Sent, It>
+    void send_batch(It it, Sent const sent)
+    {
+        while (it != sent) {
+            send(*it);
+            std::advance(it, 1);
+        }
     }
 
     // includes all events already in the event buffers.
@@ -220,3 +231,6 @@ constexpr auto Events<T>::get_reader_current() const noexcept -> ManualEventRead
 {
     return ManualEventReader<T>{ m_event_count };
 }
+
+template <typename T>
+using EventWriter = Resource<Events<T>>;

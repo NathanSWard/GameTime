@@ -31,7 +31,8 @@ struct AssetPlugin
         }
 
         builder
-            .add_stage_before<AssetStage::LoadAssets, CoreStages::PreUpdate>();
+            .add_stage_before<AssetStage::LoadAssets, CoreStages::PreUpdate>()
+            .add_stage_after<AssetStage::AssetEvents, CoreStages::PostUpdate>();
         // TODO: free_unused_assets_system
     }
 };

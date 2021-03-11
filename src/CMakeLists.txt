@@ -1,6 +1,6 @@
 set(EXECUTABLE_NAME CNGame)
 
-add_executable(${EXECUTABLE_NAME} main.cpp)
+add_executable(${EXECUTABLE_NAME} main.cpp "util/sync/mpmc.hpp")
 
 # copy assets folder
 file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/assets")
@@ -45,3 +45,7 @@ target_link_libraries(${EXECUTABLE_NAME} PRIVATE SndFile::sndfile)
 # openal-soft
 find_package(OpenAL CONFIG REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE OpenAL::OpenAL)
+
+# tbb
+find_package(TBB CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE TBB::tbb)

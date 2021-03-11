@@ -3,7 +3,9 @@
 #include <AL/al.h>
 #include <AL/alext.h>
 #include <core/audio/audio.hpp>
+#include <core/audio/error.hpp>
 #include <core/assets/loader.hpp>
+#include <debug/debug.hpp>
 #include <sndfile.h>
 
 namespace {
@@ -100,12 +102,13 @@ struct AudioLoader final : public AssetLoader
         auto* const file = sf_open_virtual(&vio, SFM_READ, &info, static_cast<void*>(&ud));
 
         if (file == nullptr) {
-            std::printf("ERROR: %s\n", sf_strerror(file));
+            LOG_ERROR("sf_open_virtual failed. Error: {}", sf_strerror(file));
             return {};
         }
 
         constexpr auto short_per_int = static_cast<sf_count_t>(std::numeric_limits<int>::max() / sizeof(short));
         if (info.frames < 1 || info.frames >  short_per_int / info.channels) {
+            LOG_ERROR("SF_INFO contains invalid frames");
             sf_close(file);
             return {};
         }
@@ -134,6 +137,7 @@ struct AudioLoader final : public AssetLoader
         }();
 
         if (format == AL_NONE) {
+            LOG_ERROR("SF_INFO contains invalid channels format");
             sf_close(file);
             return {};
         }
@@ -142,20 +146,28 @@ struct AudioLoader final : public AssetLoader
         auto membuffer = std::vector<short>(buffer_size);
 
         auto const num_frames = sf_readf_short(file, membuffer.data(), info.frames);
-        if (num_frames < 1) {
+        if (num_frames != info.frames) {
+            LOG_ERROR("sf_readf_short failed to read '{}' frames. Only '{}' were read.", info.frames, num_frames);
             sf_close(file);
             return {};
         }
 
-        auto const num_bytes = static_cast<ALsizei>(num_frames * info.channels) * static_cast<ALsizei>(sizeof(short));
-
-        ALuint buffer = 0;
-        alGenBuffers(1, &buffer);
-        alBufferData(buffer, format, membuffer.data(), num_bytes, info.samplerate);
-
         sf_close(file);
 
-        if (alGetError() != AL_NO_ERROR) {
+        auto const num_bytes = static_cast<ALsizei>(num_frames * info.channels) * static_cast<ALsizei>(sizeof(short));
+
+        ALuint buffer{};
+
+        alGenBuffers(1, &buffer);
+        if (auto const err = AudioError::current(); !err.is_ok()) {
+            LOG_ERROR("alGenBuffers failed. Error: {}", err.to_string());
+            return {};
+        }
+
+
+        alBufferData(buffer, format, membuffer.data(), num_bytes, info.samplerate);
+        if (auto const err = AudioError::current(); !err.is_ok()) {
+            LOG_ERROR("alGenBuffers failed. Error: {}", err.to_string());
             return {};
         }
 

@@ -187,7 +187,8 @@ public:
         auto server = *(resources().get_resource<AssetServer>());
         set_resource<Assets<T>>(server->register_asset_type<T>())
             .add_system_to_stage<AssetStage::LoadAssets>(update_assets_system<T>)
-            // TODO: asset_event_system
+            .add_system_to_stage<AssetStage::AssetEvents>(asset_event_system<T>)
+            .add_event<AssetEvent<T>>()
             .prepare_components<Handle<T>>();
         return *this;
     }

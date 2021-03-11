@@ -10,6 +10,7 @@
     "sdl2",
     "sdl2-image",
     "spdlog",
+    "tbb",
     "tl-expected",
     "tl-optional"
   ]
