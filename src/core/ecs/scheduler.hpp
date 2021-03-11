@@ -14,12 +14,18 @@
 
 struct StageId 
 {
-    type_id_t id{};
+    type_id_t id;
+
+    constexpr StageId(type_id_t const id) noexcept : id(id) {}
+    constexpr StageId(StageId&&) noexcept = default;
+    constexpr StageId(StageId const&) noexcept = default;
+    constexpr StageId& operator=(StageId&&) noexcept = default;
+    constexpr StageId& operator=(StageId const&) noexcept = default;
 
     template <typename StageTag>
     constexpr static auto create() -> StageId
     {
-        return StageId{ .id = type_id<StageTag>() };
+        return StageId{ type_id<StageTag>() };
     }
 
     constexpr auto operator==(StageId const& rhs) const noexcept -> bool

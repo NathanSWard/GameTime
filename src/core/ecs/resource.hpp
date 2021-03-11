@@ -10,12 +10,18 @@
 
 struct SystemId 
 { 
-    type_id_t id{};
+    type_id_t id;
+
+    constexpr SystemId(type_id_t const id) noexcept : id(id) {}
+    constexpr SystemId(SystemId&&) noexcept = default;
+    constexpr SystemId(SystemId const&) noexcept = default;
+    constexpr SystemId& operator=(SystemId&&) noexcept = default;
+    constexpr SystemId& operator=(SystemId const&) noexcept = default;
 
     template <typename T>
     constexpr static auto create() noexcept -> SystemId
     {
-        return SystemId{ .id = type_id<std::remove_cvref_t<T>>() };
+        return SystemId{ type_id<std::remove_cvref_t<T>>() };
     }
 
     constexpr auto operator==(SystemId const& rhs) const noexcept -> bool
@@ -33,7 +39,7 @@ struct std::hash<SystemId>
 {
     auto operator()(SystemId const& id) const noexcept -> std::size_t
     {
-        return static_cast<std::size_t>(id.id);
+        return static_cast<std::size_t>(id.id.hash());
     }
 };
 
@@ -125,7 +131,7 @@ public:
         auto [iter, ok] = m_local_resources.try_emplace(id);
         UNUSED(ok);
 
-        T& local = iter->second.try_add<T>(FWD(args)...);
+        T& local = iter->second.try_add<std::remove_cvref_t<T>>(FWD(args)...);
         return Local(local);
     }
 
@@ -135,7 +141,7 @@ public:
         auto [iter, ok] = m_local_resources.try_emplace(id);
         UNUSED(ok);
 
-        T& local = iter->second.set<T>(FWD(args)...);
+        T& local = iter->second.set<std::remove_cvref_t<T>>(FWD(args)...);
         return Local(local);
     }
 
@@ -143,7 +149,7 @@ public:
     auto remove_local_resource(SystemId const id) -> std::unique_ptr<T>
     {
         if (auto const iter = m_local_resources.find(id); iter != m_local_resources.end()) {
-            auto ptr = iter->second.remove<T>();
+            auto ptr = iter->second.remove<std::remove_cvref_t<T>>();
             if (iter->second.empty()) { // remove the local resources if 
                 m_local_resources.erase(iter);
             }
@@ -156,7 +162,7 @@ public:
     [[nodiscard]] auto contains_local_resource(SystemId const id) const -> bool
     {
         if (auto const iter = m_local_resources.find(id); iter != m_local_resources.end()) {
-            return iter->second.contains<T>();
+            return iter->second.contains<std::remove_cvref_t<T>>();
         }
         return false;
     }
@@ -165,7 +171,7 @@ public:
     [[nodiscard]] auto get_local_resource(SystemId const id) -> tl::optional<Local<T>>
     {
         if (auto const iter = m_local_resources.find(id); iter != m_local_resources.end()) {
-            return iter->second.get<T>().map([](T& value) { return make_local_resource(value); });
+            return iter->second.get<std::remove_cvref_t<T>>().map([](T& value) { return make_local_resource(value); });
         }
         return {};
     }
@@ -174,7 +180,7 @@ public:
     [[nodiscard]] auto get_local_resource(SystemId const id) const -> tl::optional<Local<T const>>
     {
         if (auto const iter = m_local_resources.find(id); iter != m_local_resources.end()) {
-            return iter->second.get<T const>().map([](T const& value) { return make_const_local_resource(value); });
+            return iter->second.get<std::remove_cvref_t<T>>().map([](T const& value) { return make_const_local_resource(value); });
         }
         return {};
     }
@@ -182,7 +188,7 @@ public:
     template <typename T>
     [[nodiscard]] auto cget_local_resource(SystemId const id) const -> tl::optional<Local<T const>>
     {
-        return get_local_resource<T>();
+        return get_local_resource<std::remove_cvref_t<T>>();
     }
 
     void clear_local_resources(SystemId const id)
@@ -215,45 +221,45 @@ public:
     template <typename T, typename... Args>
     auto try_add_resource(Args&&... args) -> Resource<T>
     {
-        T& resource = m_resources.try_add<T>(FWD(args)...);
+        T& resource = m_resources.try_add<std::remove_cvref_t<T>>(FWD(args)...);
         return Resource(resource);
     }
 
     template <typename T, typename... Args>
     auto set_resource(Args&&... args) -> Resource<T>
     {
-        T& resource = m_resources.set<T>(FWD(args)...);
+        T& resource = m_resources.set<std::remove_cvref_t<T>>(FWD(args)...);
         return Resource(resource);
     }
 
     template <typename T>
     auto remove_resource() -> std::unique_ptr<T>
     {
-        return m_resources.remove<T>();
+        return m_resources.remove<std::remove_cvref_t<T>>();
     }
 
     template <typename T>
     [[nodiscard]] auto contains_resource() -> bool
     {
-        return m_resources.contains<T>();
+        return m_resources.contains<std::remove_cvref_t<T>>();
     }
 
     template <typename T>
     [[nodiscard]] auto get_resource() -> tl::optional<Resource<T>>
     {
-        return m_resources.get<T>().map([](T& value) { return make_resource(value); });
+        return m_resources.get<std::remove_cvref_t<T>>().map([](T& value) { return make_resource(value); });
     }
 
     template <typename T>
     [[nodiscard]] auto get_resource() const -> tl::optional<Resource<T const>>
     {
-        return m_resources.get<T const>().map([](T const& value) { return make_const_resource(value); });
+        return m_resources.get<std::remove_cvref_t<T>>().map([](T const& value) { return make_const_resource(value); });
     }
 
     template <typename T>
     [[nodiscard]] auto cget_resource() const -> tl::optional<Resource<T const>>
     {
-        return get_resource<T>();
+        return get_resource<std::remove_cvref_t<T>>();
     }
 
     auto clear_resources()

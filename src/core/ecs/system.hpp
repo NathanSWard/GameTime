@@ -11,7 +11,7 @@
 
 class SystemSettings 
 {
-    SystemId m_id{};
+    SystemId m_id;
     bool m_should_run = true;
 
 public:

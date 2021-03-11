@@ -20,13 +20,13 @@ class HandleId
 {
 public:
     struct Uid {
-        std::uint64_t id{};
-        type_id_t   type_id{};
+        std::uint64_t id;
+        type_id_t   type_id;
     };
 
 private:
     union {
-        AssetPathId m_path_id;
+        AssetPathId m_path_id{};
         Uid m_uid;
     };
     bool m_is_path_id = false;

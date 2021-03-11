@@ -47,7 +47,7 @@ public:
     template <typename T>
     [[nodiscard]] auto contains() const -> bool
     {
-        return m_map.contains(entt::type_id<T>().hash());
+        return m_map.contains(type_id<T>());
     }
 
     template <typename T>
