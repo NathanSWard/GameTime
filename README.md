@@ -3,7 +3,7 @@
 Example Usage:
 
 ```cpp
-void my_startup_system(Commands cmds, Resource<AssetServer> server)
+void my_startup_system(Commands cmds, Resource<AssetServer const> server)
 {
 	auto texture_handle = server.load<Texture>("my-image.png"); // async loading of the image
 	cmds.spawn(SpriteBundle {
