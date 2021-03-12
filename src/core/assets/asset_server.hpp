@@ -207,7 +207,7 @@ public:
 
         auto const path_id = HandleId::from_path(path).m_path_id;
 
-        auto const version = [&] {
+        auto const version_opt = [&]() -> tl::optional<std::size_t> {
             auto asset_info = m_internal->asset_info.write();
             
             auto const [iter, inserted] = 
@@ -224,7 +224,7 @@ public:
             //       Also, if the asset is already loaded, should we remove the info?
             // When this is updated: I'll have to update the `update_assets` to ensure versions match
             if (!inserted) {// asset already exists
-                return path_id;
+                return {};
             }
 
             auto& info = iter->second;
@@ -232,6 +232,12 @@ public:
             info.version += 1;
             return info.version;
         }();
+
+        if (!version_opt) {
+            return path_id;
+        }
+
+        auto const version = *version_opt;
 
         auto set_load_state = [&](LoadState const state) {
             auto asset_info = m_internal->asset_info.write();
