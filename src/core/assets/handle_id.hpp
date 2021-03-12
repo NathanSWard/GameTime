@@ -13,7 +13,28 @@ class Handle;
 
 class UntypedHandle;
 
-using AssetPathId = std::uint64_t;
+struct AssetPathId {
+    std::size_t id = 0;
+
+    constexpr auto operator==(AssetPathId const& other) const noexcept -> bool
+    {
+        return id == other.id;
+    }
+
+    constexpr auto operator!=(AssetPathId const& other) const noexcept -> bool
+    {
+        return !(*this == other);
+    }
+};
+
+template <>
+struct std::hash<AssetPathId>
+{
+    auto operator()(AssetPathId const& apid) const noexcept -> std::size_t
+    {
+        return apid.id;
+    }
+};
 
 class HandleId
 {
@@ -56,7 +77,7 @@ public:
     [[nodiscard]] static auto from_path(std::filesystem::path const& path) -> HandleId
     {
         auto const hash = std::filesystem::hash_value(path);
-        return HandleId(static_cast<AssetPathId>(hash));
+        return HandleId(AssetPathId { .id = hash });
     }
 
     template <typename T>
@@ -109,13 +130,23 @@ struct std::hash<HandleId>
 // format specifiers
 
 template <>
+struct fmt::formatter<AssetPathId> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(AssetPathId const& apid, Ctx& ctx) {
+        return format_to(ctx.out(), "AssetPathId(id: {})", apid.id);
+    }
+};
+
+template <>
 struct fmt::formatter<HandleId> {
     constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
     template <typename Ctx>
     auto format(HandleId const& hid, Ctx& ctx) {
         if (hid.m_is_path_id) {
-            return format_to(ctx.out(), "HandleId::AssetPathId({})", hid.m_path_id);
+            return format_to(ctx.out(), "HandleId::{}", hid.m_path_id);
         }
         else {
             return format_to(ctx.out(), "HandleId::Uid(id: {}, type_id: {})", hid.m_uid.id, hid.m_uid.type_id);
