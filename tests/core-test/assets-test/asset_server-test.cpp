@@ -159,5 +159,97 @@ void asset_server_test()
 
     "[AssetServer]: Handle Garbage Collection"_test = [] {
         // TODO
+        auto useless_handle = [] {
+            return Handle<int>::weak(HandleId::random<int>());
+        };
+
+        auto server = AssetServer(std::make_unique<TestAssetIo>(), TaskPool{});
+
+        auto assets = server.register_asset_type<int>();
+
+        auto update = [&] {
+            server.update_asset_ref_count();
+            server.update_assets(assets);
+        };
+
+        should("remove asset when handle exits scope") = [&] {
+            auto id = HandleId::random<int>();
+
+            {
+                auto handle = assets.add_asset(42);
+                id = handle.id();
+                update();
+                expect(assets.contains_asset(id));
+            }
+
+            update();
+            expect(!assets.contains_asset(id));
+        };
+
+        should("not remove assets with at least one strong handle alive") = [&] {
+            auto id = HandleId::random<int>();
+            {
+                auto handle1 = Handle<int>::weak(id);
+
+                {
+                    auto handle2 = assets.add_asset(42);
+                    id = handle2.id();
+                    handle1 = handle2.copy();
+
+                    update();
+                    expect(assets.contains_asset(id));
+                } // handle2 exits scope
+
+                update();
+                expect(assets.contains_asset(id));
+            } // handle1 exits scope
+
+            update();
+            expect(!assets.contains_asset(id));
+        };
+
+        should("remove asset if only a weak handle is alive") = [&] {
+            auto id = HandleId::random<int>();
+            {
+                auto weak_handle = Handle<int>::weak(id);
+
+                {
+                    auto strong_handle = assets.add_asset(42);
+                    id = strong_handle.id();
+                    weak_handle = strong_handle.copy_weak();
+
+                    update();
+                    expect(assets.contains_asset(id));
+                } // strong_handle exits scope
+
+                update();
+                expect(!assets.contains_asset(id));
+            } // weak_handle exits scope
+
+            update();
+            expect(!assets.contains_asset(id));
+        };
+
+        should("work for untyped handles") = [&] {
+            auto id = HandleId::random<int>();
+            {
+                auto weak_handle = UntypedHandle::weak(id);
+
+                {
+                    auto strong_handle = assets.add_asset(42).untyped();
+                    id = strong_handle.id();
+                    weak_handle = strong_handle.copy_weak();
+
+                    update();
+                    expect(assets.contains_asset(id));
+                } // strong_handle exits scope
+
+                update();
+                expect(!assets.contains_asset(id));
+            } // weak_handle exits scope
+
+            update();
+            expect(!assets.contains_asset(id));
+        };
     };
 }

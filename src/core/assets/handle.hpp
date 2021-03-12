@@ -23,8 +23,21 @@ class Handle
     {}
 
 public:
-    constexpr Handle(Handle&&) noexcept = default;
-    constexpr Handle& operator=(Handle&&) noexcept = default;
+    Handle(Handle&& other) noexcept
+        : m_id(other.m_id)
+        , m_sender(other.m_sender.take())
+    {}
+
+    Handle& operator=(Handle&& other) noexcept
+    {
+        m_id = other.m_id;
+
+        if (m_sender.has_value()) {
+            m_sender->send(RefChange::decrement(m_id));
+        }
+        m_sender = other.m_sender.take();
+        return *this;
+    }
 
     ~Handle()
     {
@@ -91,8 +104,21 @@ class UntypedHandle
     {}
 
 public:
-    constexpr UntypedHandle(UntypedHandle&&) noexcept = default;
-    constexpr UntypedHandle& operator=(UntypedHandle&&) noexcept = default;
+    UntypedHandle(UntypedHandle&& other) noexcept
+        : m_id(other.m_id)
+        , m_sender(other.m_sender.take())
+    {}
+
+    UntypedHandle& operator=(UntypedHandle&& other) noexcept
+    {
+        m_id = other.m_id;
+
+        if (m_sender.has_value()) {
+            m_sender->send(RefChange::decrement(m_id));
+        }
+        m_sender = other.m_sender.take();
+        return *this;
+    }
 
     ~UntypedHandle()
     {

@@ -353,7 +353,7 @@ public:
         for (;;) {
             auto rc = receiver.recv();
             if (!rc.has_value()) {
-                break;;
+                break;
             }
 
             switch (rc->type) {
@@ -361,7 +361,7 @@ public:
                     (*ref_counts)[rc->id] += 1;
                     break;
                 case RefChange::Decrement: {
-                    auto [iter, inserted] = ref_counts->insert_or_assign(rc->id, 0);
+                    auto [iter, inserted] = ref_counts->try_emplace(rc->id, 0);
                     UNUSED(inserted);
 
                     auto& value = iter->second;
@@ -370,7 +370,7 @@ public:
                         potential_frees.push_back(rc->id);
                         ref_counts->erase(iter);
                     }
-                }
+                } break;
                 default: // unreachable
                     break;
                 }
