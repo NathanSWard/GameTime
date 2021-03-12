@@ -45,3 +45,7 @@ target_link_libraries(${EXECUTABLE_NAME} PRIVATE SndFile::sndfile)
 # openal-soft
 find_package(OpenAL CONFIG REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE OpenAL::OpenAL)
+
+# concurrentqueue
+find_package(unofficial-concurrentqueue  CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE unofficial::concurrentqueue::concurrentqueue)

@@ -17,10 +17,12 @@ constexpr auto type_name() noexcept -> std::string_view
 
 class type_id_t
 {
-    std::size_t m_hash;
-    std::string_view m_name;
+    std::size_t m_hash = 0;
+    std::string_view m_name = "Invalide Type Name";
 
 public:
+    constexpr type_id_t() noexcept = default;
+
     constexpr type_id_t(std::size_t const hash, std::string_view const name) noexcept
         : m_hash(hash)
         , m_name(name)
@@ -33,7 +35,7 @@ public:
 
     constexpr auto operator==(type_id_t const& other) const noexcept -> bool
     {
-        return m_hash == other.m_hash && m_name == other.m_name;
+        return m_hash == other.m_hash && m_name.data() == other.m_name.data();
     }
 
     constexpr auto operator!=(type_id_t const& other) const noexcept -> bool

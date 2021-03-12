@@ -104,7 +104,7 @@ void asset_server_test()
             expect((result.has_value()) >> fatal);
             
             auto path_id = *result;
-            expect(server.get_load_state(UntypedHandle{ HandleId { path_id } }) == LoadState::Loaded);
+            expect(server.get_load_state(HandleId(path_id)) == LoadState::Loaded);
 
             server.update_assets(assets);
             expect(assets.size() == 1);
@@ -155,5 +155,9 @@ void asset_server_test()
             auto const result = server.load_sync(asset_path);
             expect(result.has_value());
         };
+    };
+
+    "[AssetServer]: Handle Garbage Collection"_test = [] {
+        // TODO
     };
 }

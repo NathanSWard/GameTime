@@ -86,12 +86,20 @@ class Assets<Texture> : public AssetsBase<Texture>
 public:
     auto unready_texture_size() const noexcept -> std::size_t { return m_surfaces.size(); }
 
+    Assets(Sender<RefChange> sender)
+        : AssetsBase<Texture>(MOV(sender))
+    {}
+
+    Assets(Assets&&) noexcept = default;
+    Assets& operator=(Assets&&) noexcept = default;
+
     template <typename... Args>
     auto add_asset(Args&&... args) -> Handle<Texture>
     {
         auto const id = HandleId::random<Texture>();
         auto texture = Texture(FWD(args)...);
 
+        m_events.push_back(AssetEvent<Texture>::created(Handle<Texture>::weak(id)));
         if (texture.m_is_texture) {
             this->m_assets.insert_or_assign(id, MOV(texture));
         }
@@ -101,13 +109,12 @@ public:
                 std::forward_as_tuple(MOV(texture)));
         }
 
-        return Handle<Texture>{ id };
+        return get_handle(id);
     }
 
     template <typename... Args>
-    auto set_asset(Handle<Texture> const& handle, Args&&... args) -> Handle<Texture>
+    auto set_asset(HandleId const id, Args&&... args)
     {
-        auto const id = handle.id();
         auto texture = Texture(FWD(args)...);
 
         if (auto const tfound = m_assets.find(id); tfound != m_assets.end()) {
@@ -120,6 +127,7 @@ public:
                     std::forward_as_tuple(id), 
                     std::forward_as_tuple(MOV(texture)));
             }
+            m_events.push_back(AssetEvent<Texture>::modified(Handle<Texture>::weak(id)));
         }
         else if (auto const sfound = std::ranges::find(m_surfaces, id, [](auto const& data) -> HandleId const& { return data.first; })
             ; sfound != m_surfaces.end()) {
@@ -130,6 +138,7 @@ public:
             else {
                 sfound->second = MOV(texture);
             }
+            m_events.push_back(AssetEvent<Texture>::modified(Handle<Texture>::weak(id)));
         }
         else {
             if (texture.m_is_texture) {
@@ -140,9 +149,8 @@ public:
                     std::forward_as_tuple(id),
                     std::forward_as_tuple(MOV(texture)));
             }
+            m_events.push_back(AssetEvent<Texture>::created(Handle<Texture>::weak(id)));
         }
-
-        return Handle<Texture>{ id };
     }
 
     void update(RenderContext& rctx)

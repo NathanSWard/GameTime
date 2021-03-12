@@ -8,7 +8,8 @@ using namespace boost::ut;
 void assets_test()
 {
     "[Assest]"_test = [] {
-        auto as = Assets<int>();
+        auto [send, recv] = mpmc_channel<RefChange>();
+        auto as = Assets<int>(MOV(send));
 
         auto handle1 = as.add_asset(1);
         auto handle2 = as.add_asset(2);
@@ -27,16 +28,13 @@ void assets_test()
 
         should("get handle's value") = [&] {
             auto value1 = as.get_asset(handle1);
-            auto const value2a = as.cget_asset(handle2);
-            auto const value2b = std::as_const(as).get_asset(handle2);
+            auto value2 = as.get_mut_asset_untracked(handle2);
 
-            static_assert(std::is_same_v<decltype(*value1), int&>);
-            static_assert(std::is_same_v<decltype(*value2a), int const&>);
-            static_assert(std::is_same_v<decltype(*value2b), int const&>);
+            static_assert(std::is_same_v<decltype(*value1), int const&>);
+            static_assert(std::is_same_v<decltype(*value2), int&>);
 
-            expect((value1.has_value() && value2a.has_value()) >> fatal);
-            expect(*value1 == 1 && *value2a == 2 && *value2b == 2);
-            expect(std::addressof(*value2a) == std::addressof(*value2b));
+            expect((value1.has_value() && value2.has_value()) >> fatal);
+            expect(*value1 == 1 && *value2 == 2);
         };
 
         as.set_asset(handle1, 99);
@@ -66,5 +64,33 @@ void assets_test()
                 expect(!as.get_asset(handle2));
             };
         };
+    };
+
+    "[AssetEvent]"_test = [] {
+        auto [send, recv] = mpmc_channel<RefChange>();
+        auto as = Assets<int>(MOV(send));
+
+        Events<AssetEvent<int>> events;
+        auto reader = events.get_reader();
+
+        as.update_events(events);
+        expect(reader.iter(events).size() == 0);
+
+        auto check_event = [&](auto type) {
+            as.update_events(events);
+            auto iter = reader.iter(events);
+            expect((iter.size() == 1) >> fatal);
+            auto const& event = *iter.begin();
+            expect(event.type == type);
+        };
+
+        auto handle = as.add_asset(42);
+        check_event(AssetEvent<int>::Created);
+
+        as.set_asset(handle.id(), 2);
+        check_event(AssetEvent<int>::Modified);
+
+        as.remove_asset(handle.id());
+        check_event(AssetEvent<int>::Removed);
     };
 }

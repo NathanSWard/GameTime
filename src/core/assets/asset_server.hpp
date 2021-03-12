@@ -19,13 +19,14 @@
 #include "asset_io/asset_io.hpp"
 #include "handle.hpp"
 #include "loader.hpp"
+#include "ref_change.hpp"
 
 namespace AssetStage {
 
     struct LoadAssets {};
-    // TODO: struct AssetEvents {};
+    struct AssetEvents {};
 
-} // AssetStage
+} // namespace AssetStage
 
 
 enum class LoadState
@@ -51,23 +52,36 @@ namespace {
         AssetPathId path_id;
     };
 
+    struct AssetRefCounter
+    {
+        RefChangeChannel channel;
+        RwLock<std::unordered_map<HandleId, std::size_t>> ref_counts;
+    };
+
     struct AssetServerInternal
     {
         AssetServerInternal(std::unique_ptr<AssetIo> asset_io, TaskPool taskpool)
             : asset_io(MOV(asset_io))
+            , ref_counter(AssetRefCounter{
+                .channel = RefChangeChannel::create(),
+                })
             , task_pool(MOV(taskpool))
         {}
 
+        AssetServerInternal(AssetServerInternal&&) noexcept = default;
+        AssetServerInternal& operator=(AssetServerInternal&&) noexcept = default;
+
         TaskPool task_pool;
         std::unique_ptr<AssetIo> asset_io;
+        AssetRefCounter ref_counter;
         RwLock<std::vector<std::shared_ptr<AssetLoader>>> loaders;
         RwLock<std::unordered_map<std::string, std::size_t, hash::string_hash, std::equal_to<>>> extension_to_loader_index;
         RwLock<std::unordered_map<AssetPathId, AssetInfo>> asset_info;
         RwLock<std::unordered_map<type_id_t, std::vector<StoredAsset>>> stored_assets;
+        RwLock<std::unordered_map<type_id_t, std::vector<HandleId>>> assets_to_free;
     };
 }
 
-// TODO: Ref count each handle per asset
 class AssetServer
 {
     std::shared_ptr<AssetServerInternal> m_internal;
@@ -99,6 +113,19 @@ public:
     AssetServer& operator=(AssetServer const&) noexcept = default;
 
     template <typename T>
+    [[nodiscard]] auto get_handle(HandleId const id) const -> Handle<T>
+    {
+        auto sender = m_internal->ref_counter.channel.sender;
+        return Handle<T>::strong(id, MOV(sender));
+    }
+
+    [[nodiscard]] auto get_untyped_handle(HandleId const id) const -> UntypedHandle
+    {
+        auto sender = m_internal->ref_counter.channel.sender;
+        return UntypedHandle::strong(id, MOV(sender));
+    }
+
+    template <typename T>
     [[nodiscard]] auto register_asset_type() const -> Assets<T>
     {
         auto stored_assets = m_internal->stored_assets.write();
@@ -106,7 +133,7 @@ public:
             std::forward_as_tuple(type_id<T>()),
             std::forward_as_tuple()
         );
-        return Assets<T>{};
+        return Assets<T>(m_internal->ref_counter.channel.sender);
     }
 
     template <IsAssetLoader T, typename... Args>
@@ -137,7 +164,6 @@ public:
 
     [[nodiscard]] auto get_asset_loader_from_path(std::filesystem::path const& path) const -> tl::optional<std::shared_ptr<AssetLoader>>
     {
-        // TODO: not the most efficent :(
         auto filename = path.filename().string();
         if (filename.empty()) {
             return {};
@@ -158,23 +184,17 @@ public:
         return {};
     }
 
-    auto get_load_state(UntypedHandle const& handle) const -> LoadState
+    [[nodiscard]] auto get_load_state(HandleId const id) const -> LoadState
     {
-        if (!handle.id().m_is_path_id) {
+        if (!id.m_is_path_id) {
             return LoadState::NotLoaded;
         }
 
         auto asset_info = m_internal->asset_info.read();
-        if (auto const iter = asset_info->find(handle.id().m_path_id); iter != asset_info->end()) {
+        if (auto const iter = asset_info->find(id.m_path_id); iter != asset_info->end()) {
             return iter->second.load_state;
         }
         return LoadState::NotLoaded;
-    }
-
-    template <typename T>
-    auto get_load_state(Handle<T> const& handle) const -> LoadState
-    {
-        return get_load_state(handle.untyped());
     }
 
     // TODO: Make async??
@@ -202,6 +222,7 @@ public:
 
             // TODO: Possibly give the option to force the asset to reload?
             //       Also, if the asset is already loaded, should we remove the info?
+            // When this is updated: I'll have to update the `update_assets` to ensure versions match
             if (!inserted) {// asset already exists
                 return path_id;
             }
@@ -277,13 +298,14 @@ public:
 
     [[nodiscard]] auto load_untyped(std::filesystem::path const& path) const -> UntypedHandle
     {
-        return UntypedHandle{ load_untracked(path) };
+        auto const id = load_untracked(path);
+        return get_untyped_handle(id);
     }
 
     template <typename T>
     [[nodiscard]] auto load(std::filesystem::path const& path) const -> Handle<T>
     {
-        return *load_untyped(path).typed<T>();
+        return load_untyped(path).typed<T>();
     }
 
     [[nodiscard]] auto load_folder(std::filesystem::path const& dir) const -> tl::expected<std::vector<UntypedHandle>, Error>
@@ -321,9 +343,73 @@ public:
         return handles;
     }
 
+    void update_asset_ref_count() const
+    {
+        auto potential_frees = std::vector<HandleId>();
+
+        auto& receiver = m_internal->ref_counter.channel.receiver;
+        auto ref_counts = m_internal->ref_counter.ref_counts.write();
+
+        for (;;) {
+            auto rc = receiver.recv();
+            if (!rc.has_value()) {
+                break;;
+            }
+
+            switch (rc->type) {
+                case RefChange::Increment:
+                    (*ref_counts)[rc->id] += 1;
+                    break;
+                case RefChange::Decrement: {
+                    auto [iter, inserted] = ref_counts->insert_or_assign(rc->id, 0);
+                    UNUSED(inserted);
+
+                    auto& value = iter->second;
+                    value -= 1;
+                    if (value == 0) {
+                        potential_frees.push_back(rc->id);
+                        ref_counts->erase(iter);
+                    }
+                }
+                default: // unreachable
+                    break;
+                }
+        }
+
+        if (!potential_frees.empty()) {
+            
+            auto assets_to_free = m_internal->assets_to_free.write();
+            auto asset_info = m_internal->asset_info.write();
+
+            for (auto const& id : potential_frees) {
+                DEBUG_ASSERT(!ref_counts->contains(id), "AssetServer trying to free a valid asset handle.");
+                
+                auto const tid = [&]() -> tl::optional<type_id_t> {
+                    // get type_id_t and possilby erase from the `asset_info`.
+                    if (id.m_is_path_id) {
+                        if (auto const iter = asset_info->find(id.m_path_id); iter != asset_info->end()) {
+                            auto const tid = iter->second.type_id;
+                            asset_info->erase(iter);
+                            return tid;
+                        }
+                        return {};
+                    }
+                    else { // is uuid 
+                        return id.m_uid.type_id;
+                    }
+                }();
+
+                if (tid.has_value()) {
+                    (*assets_to_free)[*tid].push_back(id);
+                }
+            }
+        }
+    }
+
     template <typename T>
     void update_assets(Assets<T>& assets) const
     {
+        // add all newly created assets
         auto new_assets = [&]() -> std::vector<StoredAsset> {
             auto stored_assets = m_internal->stored_assets.write();
             if (auto const iter = stored_assets->find(type_id<T>()); iter != stored_assets->end()) {
@@ -337,8 +423,40 @@ public:
         for (auto& asset : new_assets) {
             assets.set_asset(HandleId{ asset.path_id }, MOV(*static_cast<T*>(asset.data.take())));
         }
+
+        // remove unused assets
+        {
+            // First check if it even worth acquiring the write lock on the `assets_to_free`.
+            auto assets_to_free = m_internal->assets_to_free.read();
+            if (auto const iter = assets_to_free->find(type_id<T>()); iter == assets_to_free->end()) {
+                return;
+            }
+            else if (iter->second.empty()){
+                return;
+            }
+        }
+
+        auto handle_ids = [&] {
+            auto assets_to_free = m_internal->assets_to_free.write();
+            auto iter = assets_to_free->find(type_id<T>());
+            DEBUG_ASSERT(iter != assets_to_free->end(), "AssetServer should have assets to free for: Assets<{}>", type_name<T>());
+
+            // TODO: should we remove the vector<> from the assets_to_free for this type `T`?
+            auto handle_ids = std::vector<HandleId>();
+            handle_ids.swap(iter->second);
+            return handle_ids;
+        }();
+
+        for (auto const& id : handle_ids) {
+            assets.remove_asset(id);
+        }
     }
 };
+
+void update_asset_ref_count_system(Resource<AssetServer const> server)
+{
+    server->update_asset_ref_count();
+}
 
 template <typename T>
 void update_assets_system(Resource<AssetServer const> server, Resource<Assets<T>> assets)

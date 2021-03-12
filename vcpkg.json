@@ -2,6 +2,7 @@
   "name": "cngame",
   "version-string": "0.0.1",
   "dependencies": [
+    "concurrentqueue",
     "entt",
     "eigen3",
     "fmt",

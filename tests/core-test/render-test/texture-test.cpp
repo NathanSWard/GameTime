@@ -23,7 +23,8 @@ void texture_test()
         auto texture = SDL_CreateTextureFromSurface(rctx->raw(), surface);
         expect((texture != nullptr) >> fatal);
 
-        auto assets = Assets<Texture>();
+        auto [send, recv] = mpmc_channel<RefChange>();
+        auto assets = Assets<Texture>(MOV(send));
 
         // add a new surface & texture
         auto shandle = assets.add_asset(surface);
