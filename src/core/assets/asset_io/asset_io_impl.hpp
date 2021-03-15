@@ -19,9 +19,8 @@ public:
     {
         auto const full_path = m_root_path / path;
         return [path = MOV(full_path)] () -> Result {
-            FILE* file = nullptr;
-            auto const err = fopen_s(&file, path.string().c_str(), "rb");
-            if (err != 0) {
+            auto const file = fopen(path.string().c_str(), "rb");
+            if (file == nullptr) {
                 return tl::make_unexpected(Error::IoError);
             }
 

@@ -49,13 +49,13 @@ protected:
 
 public:
     template <typename StageTag>
-    constexpr static auto create() -> Stage
+    static auto create() -> Stage
     {
         return Stage(StageId::create<StageTag>());
     }
 
-    constexpr Stage(Stage&&) noexcept = default;
-    constexpr Stage& operator=(Stage&&) noexcept = default;
+    Stage(Stage&&) noexcept = default;
+    Stage& operator=(Stage&&) noexcept = default;
 
     constexpr auto id() const noexcept { return m_id; }
 
@@ -80,7 +80,7 @@ class Scheduler
     std::vector<std::unique_ptr<Stage>> m_startup_stages;
     std::vector<std::unique_ptr<Stage>> m_stages;
 
-    static constexpr auto extract_stage_id(std::unique_ptr<Stage> const& stage) noexcept -> StageId
+    static auto extract_stage_id(std::unique_ptr<Stage> const& stage) noexcept -> StageId
     {
         return stage->id();
     }

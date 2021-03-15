@@ -28,8 +28,8 @@ class Window
     friend class RenderContext;
 
 public:
-    constexpr Window(Window&&) noexcept = default;
-    constexpr Window& operator=(Window&&) noexcept = default;
+    Window(Window&&) noexcept = default;
+    Window& operator=(Window&&) noexcept = default;
 
     static auto create(WindowSettings const& settings) noexcept -> tl::expected<Window, sdl::Error>
     {

@@ -25,10 +25,31 @@
         char const* m_function = "";
     public:
         [[nodiscard]] static CONSTEVAL source_location current(
-            std::uint_least32_t const line = __builtin_LINE(),
-            std::uint_least32_t const column = __builtin_COLUMN(), 
-            char const* const file = __builtin_FILE(),
-            char const* const function = __builtin_FUNCTION()) noexcept 
+            std::uint_least32_t const line =
+#if __has_builtin(__builtin_LINE)
+            __builtin_LINE(),
+#else
+        0,
+#endif
+            std::uint_least32_t const column =
+#if __has_builtin(__builtin_COLUMN)
+             __builtin_COLUMN(),
+#else
+            0,
+#endif
+            char const* const file =
+#if __has_builtin(__builtin_FILE)
+            __builtin_FILE(),
+#else
+            "unknown",
+#endif
+            char const* const function =
+#if __has_builtin(__builtin_FUNCTION)
+            __builtin_FUNCTION()
+#else
+                "unknown"
+#endif
+                    ) noexcept
         {
             source_location loc;
             loc.m_line = line;

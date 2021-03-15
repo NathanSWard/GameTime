@@ -1776,6 +1776,7 @@ template <class Test>
   return detail::tag{tag};
 }
 
+/*
 template <class F, class T,
           type_traits::requires_t<type_traits::is_container_v<T>> = 0>
 [[nodiscard]] constexpr auto operator|(const F& f, const T& t) {
@@ -1809,6 +1810,7 @@ template <
         t);
   };
 }
+ */
 
 namespace terse {
 #if defined(__clang__)
@@ -2278,6 +2280,7 @@ namespace spec {
 
 using literals::operator""_test;
 
+/*
 using literals::operator""_b;
 using literals::operator""_i;
 using literals::operator""_s;
@@ -2303,8 +2306,10 @@ using operators::operator<=;
 using operators::operator and;
 using operators::operator or;
 using operators::operator not;
-using operators::operator|;
+//using operators::operator|;
 using operators::operator/;
+ */
+
 using operators::operator>>;
 }  // namespace v1_1_8
 }  // namespace ut

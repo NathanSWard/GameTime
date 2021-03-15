@@ -77,17 +77,58 @@ namespace hash {
     struct string_hash
     {
         using hash_type = std::hash<std::string_view>;
-        using is_transparent = void;
+        using is_transparent = std::true_type;
 
-        size_t operator()(const char* str) const { return hash_type{}(str); }
-        size_t operator()(std::string_view str) const { return hash_type{}(str); }
-        size_t operator()(std::string const& str) const { return hash_type{}(str); }
+        std::size_t operator()(char const* const str) const noexcept { return hash_type{}(str); }
+        std::size_t operator()(std::string_view const str) const noexcept { return hash_type{}(str); }
+        std::size_t operator()(std::string const& str) const noexcept { return hash_type{}(str); }
+    };
+
+    struct string_equal
+    {
+        using is_transparent = std::true_type;
+
+        constexpr auto operator()(std::string_view const lhs, std::string_view const rhs) const noexcept -> bool
+        {
+            return lhs == rhs;
+        }
     };
 
 } // namespace hash
 
 template <typename T>
-concept Formattable = requries(T const& t)
+concept Formattable = requires(T const& t)
 {
     { fmt::format("{}", t) };
 };
+
+// bit_cast
+#if __cpp_lib_bit_cast >= 201896L
+    #include <bit>
+
+#define CONSTEXPR_BIT_CAST constexpr
+
+    template <typename To, typename From>
+    auto bit_cast(const From& src) noexcept -> To
+    {
+        return std::bit_cast<To>(src);
+    }
+#else
+
+#define CONSTEXPR_BIT_CAST
+
+    template <typename To, typename From>
+    requires (sizeof(To) == sizeof(From) &&
+              std::is_trivially_copyable_v<From> &&
+              std::is_trivially_copyable_v<To>)
+    // constexpr support needs compiler magic
+    auto bit_cast(const From& src) noexcept -> To
+    {
+        static_assert(std::is_trivially_constructible_v<To>,
+                      "This implementation additionally requires destination type to be trivially constructible");
+
+        To dst;
+        std::memcpy(&dst, &src, sizeof(To));
+        return dst;
+    }
+#endif

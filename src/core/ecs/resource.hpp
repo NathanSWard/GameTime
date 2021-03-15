@@ -84,25 +84,25 @@ public:
 
 };
 
-namespace {
+namespace resource_detail {
     struct ResourceTag {};
     struct LocalTag {};
 }
 
 // TODO: Make Resources Thread Safe!
 template <typename T>
-using Resource = ResourceBase<T, ResourceTag>;
+using Resource = ResourceBase<T, resource_detail::ResourceTag>;
 
 template <typename T>
-using Local = ResourceBase<T, LocalTag>;
+using Local = ResourceBase<T, resource_detail::LocalTag>;
 
-template <typename T, typename Tag = ResourceTag>
+template <typename T, typename Tag = resource_detail::ResourceTag>
 constexpr auto make_resource(T& value) -> ResourceBase<T, Tag>
 {
     return ResourceBase<T, Tag>(value);
 }
 
-template <typename T, typename Tag = ResourceTag>
+template <typename T, typename Tag = resource_detail::ResourceTag>
 constexpr auto make_const_resource(T const& value) -> ResourceBase<T const, Tag>
 {
     return ResourceBase<T const, Tag>(value);
@@ -111,13 +111,13 @@ constexpr auto make_const_resource(T const& value) -> ResourceBase<T const, Tag>
 template <typename T>
 constexpr auto make_local_resource(T& value) -> Local<T>
 {
-    return make_resource<T, LocalTag>(value);
+    return make_resource<T, resource_detail::LocalTag>(value);
 }
 
 template <typename T>
 constexpr auto make_const_local_resource(T const& value) -> Local<T const>
 {
-    return make_const_resource<T, LocalTag>(value);
+    return make_const_resource<T, resource_detail::LocalTag>(value);
 }
 
 class LocalResources

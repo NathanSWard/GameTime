@@ -90,7 +90,7 @@ public:
     auto add_event() -> GameBuilder&
     {
         return try_add_resource<Events<T>>()
-            .add_system_to_stage<CoreStages::Events>(events_update_system<T>);
+            .template add_system_to_stage<CoreStages::Events>(events_update_system<T>);
     }
 
     // plugins
@@ -186,10 +186,10 @@ public:
         DEBUG_ASSERT(resources().contains_resource<AssetServer>(), "AssetServer does not yet exist.");
         auto server = *(resources().get_resource<AssetServer>());
         set_resource<Assets<T>>(server->register_asset_type<T>())
-            .add_system_to_stage<AssetStage::LoadAssets>(update_assets_system<T>)
-            .add_system_to_stage<AssetStage::AssetEvents>(asset_event_system<T>)
-            .add_event<AssetEvent<T>>()
-            .prepare_components<Handle<T>>();
+            .template add_system_to_stage<AssetStage::LoadAssets>(update_assets_system<T>)
+            .template add_system_to_stage<AssetStage::AssetEvents>(asset_event_system<T>)
+            .template add_event<AssetEvent<T>>()
+            .template prepare_components<Handle<T>>();
         return *this;
     }
 

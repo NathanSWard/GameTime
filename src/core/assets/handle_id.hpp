@@ -110,9 +110,9 @@ public:
 };
 
 namespace {
-    [[nodiscard]] constexpr auto to_bytes(HandleId const& id) noexcept -> std::array<char, sizeof(HandleId)>
+    [[nodiscard]] CONSTEXPR_BIT_CAST auto to_bytes(HandleId const& id) noexcept -> std::array<char, sizeof(HandleId)>
     {
-        return std::bit_cast<std::array<char, sizeof(HandleId)>>(id);
+        return bit_cast<std::array<char, sizeof(HandleId)>>(id);
     }
 }
 

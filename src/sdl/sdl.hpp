@@ -78,6 +78,7 @@ namespace sdl {
                 SDL_DestroyWindow(m_window);
             }
             m_window = std::exchange(other.m_window, nullptr);
+            return *this;
         }
 
         static auto create(char const* const title, int const x, int const y, int const w, int const h, std::uint32_t const flags) -> tl::expected<Window, Error> {
@@ -115,6 +116,7 @@ namespace sdl {
                 SDL_DestroyRenderer(m_renderer);
             }
             m_renderer = std::exchange(other.m_renderer, nullptr);
+            return *this;
         }
 
         static auto create(Window& window, int const index, std::uint32_t const flags) -> tl::expected<Renderer, Error> {

@@ -90,6 +90,6 @@ public:
     template <typename T>
     [[nodiscard]] auto cget() const ->tl::optional<T const&>
     {
-        return get();
+        return get<T>();
     }
 };

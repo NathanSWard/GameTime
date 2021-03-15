@@ -33,7 +33,7 @@ struct Event
 template <typename T>
 class ManualEventReader;
 
-namespace {
+namespace event_detail {
     template <typename T>
     constexpr auto map_instance_event_with_id(Event<T> const& event) noexcept -> std::tuple<EventId<T>, T const&>
     {
@@ -47,18 +47,14 @@ namespace {
     }
 }
 
-namespace {
-
+template <typename T>
+class Events
+{
     enum class State
     {
         A, B,
     };
 
-} // namespace
-
-template <typename T>
-class Events
-{
     std::vector<Event<T>> m_a_events;
     std::vector<Event<T>> m_b_events;
     std::size_t m_a_start_event_count = 0;
@@ -178,12 +174,12 @@ public:
 
     auto iter_with_id(Events<T> const& events) noexcept
     {
-        return events.internal_event_reader(m_last_event_count, map_instance_event_with_id<T>);
+        return events.internal_event_reader(m_last_event_count, event_detail::map_instance_event_with_id<T>);
     }
 
     auto iter(Events<T> const& events) noexcept
     {
-        return events.internal_event_reader(m_last_event_count, map_instance_event<T>);
+        return events.internal_event_reader(m_last_event_count, event_detail::map_instance_event<T>);
     }
 };
 
@@ -211,12 +207,12 @@ public:
 
     auto iter_with_id() noexcept
     {
-        return m_events->internal_event_reader(m_last_event_count->count, map_instance_event_with_id<T>);
+        return m_events->internal_event_reader(m_last_event_count->count, event_detail::map_instance_event_with_id<T>);
     }
 
     auto iter() noexcept
     {
-        return m_events->internal_event_reader(m_last_event_count->count, map_instance_event<T>);
+        return m_events->internal_event_reader(m_last_event_count->count, event_detail::map_instance_event<T>);
     }
 };
 

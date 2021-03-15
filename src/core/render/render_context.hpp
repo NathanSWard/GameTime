@@ -31,8 +31,8 @@ public:
         return RenderContext(*MOV(renderer));
     }
 
-    constexpr RenderContext(RenderContext&&) noexcept = default;
-    constexpr RenderContext& operator=(RenderContext&&) noexcept = default;
+    RenderContext(RenderContext&&) noexcept = default;
+    RenderContext& operator=(RenderContext&&) noexcept = default;
 
     [[nodiscard]] constexpr auto raw() const noexcept { return m_renderer.raw(); }
     [[nodiscard]] constexpr auto raw() noexcept { return m_renderer.raw(); }

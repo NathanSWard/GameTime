@@ -9,7 +9,7 @@ class TaskPool
 {
 public:
     template <std::invocable F>
-    [[nodiscard]] void execute(F&& f) const
+    void execute(F&& f) const
     {
         auto t = std::thread(FWD(f));
         t.detach();

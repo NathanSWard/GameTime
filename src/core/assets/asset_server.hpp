@@ -45,7 +45,7 @@ struct AssetInfo
     std::size_t             version = 0;
 };
 
-namespace {
+namespace as_detail {
     struct StoredAsset
     {
         void_ptr data;
@@ -75,7 +75,7 @@ namespace {
         std::unique_ptr<AssetIo> asset_io;
         AssetRefCounter ref_counter;
         RwLock<std::vector<std::shared_ptr<AssetLoader>>> loaders;
-        RwLock<std::unordered_map<std::string, std::size_t, hash::string_hash, std::equal_to<>>> extension_to_loader_index;
+        RwLock<std::unordered_map<std::string, std::size_t, hash::string_hash, hash::string_equal>> extension_to_loader_index;
         RwLock<std::unordered_map<AssetPathId, AssetInfo>> asset_info;
         RwLock<std::unordered_map<type_id_t, std::vector<StoredAsset>>> stored_assets;
         RwLock<std::unordered_map<type_id_t, std::vector<HandleId>>> assets_to_free;
@@ -84,7 +84,8 @@ namespace {
 
 class AssetServer
 {
-    std::shared_ptr<AssetServerInternal> m_internal;
+    std::shared_ptr<as_detail::AssetServerInternal> m_internal;
+    using StoredAsset = as_detail::StoredAsset;
 
 public:
 
@@ -102,7 +103,7 @@ public:
 
     template <IsAssetIo AIo>
     AssetServer(std::unique_ptr<AIo> asset_io, TaskPool taskpool) noexcept
-        : m_internal(std::make_shared<AssetServerInternal>(MOV(asset_io), MOV(taskpool)))
+        : m_internal(std::make_shared<as_detail::AssetServerInternal>(MOV(asset_io), MOV(taskpool)))
     {
         DEBUG_ASSERT(m_internal->asset_io != nullptr, "AssetServer asset_io cannot be null");
     }

@@ -168,11 +168,11 @@ namespace internal {
 
     // helper function that aggregate all the system arguments, check them, and then invoke the original function
     template <typename F, typename... Args>
-    void type_erased_system_impl(SystemSettings& settings, void* const data, Resources& res, World& world, meta::args<Args...>)
+    void type_erased_system_impl(SystemSettings& settings, void const* const data, Resources& res, World& world, meta::args<Args...>)
     {
         static_assert(meta::all<valid_system_arg, std::remove_cvref_t<Args>...>, "System arguments can only be a `Query<>` or `Resource<>`");
         
-        auto const func = static_cast<F*>(data);
+        auto const func = reinterpret_cast<F const*>(data);
 
         auto args = get_system_args<std::remove_cvref_t<Args>...>(settings, res, world);
 
@@ -183,7 +183,7 @@ namespace internal {
 
     // type erased system function that reinterprets the function pointer to the original type
     template <typename F>
-    void type_erased_system(SystemSettings& settings, void* const data, Resources& resources, World& world)
+    void type_erased_system(SystemSettings& settings, void const* const data, Resources& resources, World& world)
     {
         using Func = std::remove_cvref_t<F>;
         using func_traits = meta::function_traits<Func>;
@@ -192,7 +192,7 @@ namespace internal {
         type_erased_system_impl<Func>(settings, data, resources, world, typename func_traits::args_t{});
     }
 
-    using type_erased_system_t = void(*)(SystemSettings&, void*, Resources&, World&);
+    using type_erased_system_t = void(*)(SystemSettings&, void const*, Resources&, World&);
 
 } // namespace internal
 
@@ -201,10 +201,10 @@ class System
     using run_func_t = internal::type_erased_system_t;
 
     run_func_t m_run_func;
-    void* m_data = nullptr;
+    void const* m_data = nullptr;
     SystemSettings m_settings;
 
-    constexpr System(run_func_t const run_func, void* const data, SystemId const id) noexcept
+    System(run_func_t const run_func, void const* const data, SystemId const id) noexcept
         : m_run_func(run_func)
         , m_data(data)
         , m_settings(id, true)
@@ -216,11 +216,11 @@ public:
 
     template <typename F>
     requires (!std::is_rvalue_reference_v<F>)
-    static constexpr auto create(F&& f) -> System
+    static auto create(F&& f) -> System
     {
         auto const id = SystemId::create<F>();
         auto const run_func = internal::type_erased_system<F>;
-        return System(run_func, std::addressof(f), id);
+        return System(run_func, reinterpret_cast<void const*>(std::addressof(f)), id);
     }
 
     constexpr void run(Resources& resources, World& world)

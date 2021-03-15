@@ -120,7 +120,7 @@ template <typename T>
 class Rc {
     Rc_storage_base<T>* m_base;
 
-    constexpr explicit Rc(Weak::Weak<T> const& w) noexcept
+    constexpr explicit Rc(Weak<T> const& w) noexcept
         : m_base(w.m_base)
     {
         m_base->inc_strong_count();
@@ -130,7 +130,7 @@ class Rc {
         : m_base(reinterpret_cast<Rc_storage_base<T>*>(ptr))
     {}
 
-    friend class Weak::Weak<T>;
+    friend class Weak<T>;
 
 public:
     template <typename... Args>
