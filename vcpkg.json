@@ -2,6 +2,8 @@
   "name": "cngame",
   "version-string": "0.0.1",
   "dependencies": [
+    "boost-preprocessor",
+    "boost-variant2",
     "concurrentqueue",
     "entt",
     "eigen3",
