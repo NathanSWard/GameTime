@@ -2,6 +2,7 @@
 
 #include <boost/variant2/variant.hpp>
 #include <boost/preprocesor/repeat.hpp>
+#include <fmt/format.h>
 #include <util/common.hpp>
 
 using variant = boost::variant2::variant;
@@ -40,3 +41,19 @@ BOOST_FORCEINLINE constexpr auto visit(auto&& f, auto&& v) -> decltype(auto)
 #undef VISIT_CASE_COUNT
 #undef VISIT_CASE
 }
+
+template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+template <typename... Ts>
+requires (Formattable<Ts> && ...)
+struct fmt::formatter<variant<Ts...>> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(variant<Ts...> const& var, Ctx& ctx) {
+        return visit([&](auto const& value) {
+            return fmt::format("variant::{}", value);
+            }, var);
+    }
+};

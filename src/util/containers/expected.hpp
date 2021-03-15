@@ -31,3 +31,19 @@ struct try_ops<expected<T, E>>
         return *MOV(exp);
     }
 };
+
+template <typename T, typename E>
+requires (Formattable<T> && Formattable<E>)
+    struct fmt::formatter<expected<T, E>> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(expected<T, E> const& exp, Ctx& ctx) {
+        if (exp.has_value()) {
+            return format_to(ctx.out(), "expected<{}, {}>::Ok({})", type_name<T>(), type_name<E>(), *exp);
+        }
+        else {
+            return format_to(ctx.out(), "expected<{}, {}>::Err({})", type_name<T>(), type_name<E>(), exp.error());
+        }
+    }
+};

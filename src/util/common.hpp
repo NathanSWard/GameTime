@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <fmt/format.h>
 #include <type_traits>
 #include <entt/entt.hpp>
 #include <util/meta.hpp>
@@ -84,3 +85,9 @@ namespace hash {
     };
 
 } // namespace hash
+
+template <typename T>
+concept Formattable = requries(T const& t)
+{
+    { fmt::format("{}", t) };
+};

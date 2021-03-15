@@ -1,6 +1,7 @@
 #pramga once
 
 #include <debug/debug.hpp>
+#include <fmt/format.h>
 #include <tl/optional.hpp>
 #include <util/common.hpp>
 #include <util/containers/try.hpp>
@@ -10,7 +11,7 @@ using optional = tl::optional<T>;
 
 using nullopt_t = tl::nullopt_t;
 
-inline constexpr nullopt_t = tl::nullopt;
+inline constexpr nullopt_t nullopt = tl::nullopt;
 
 template <typename T, typename... Args>
 constexpr auto make_optional(Args&&... args)
@@ -53,6 +54,22 @@ struct try_ops<optional<T>>
         {
             return *MOV(o);
         }
+};
+
+template <typename T>
+requires (Formattable<T>)
+struct fmt::formatter<optional<T>> {
+    constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename Ctx>
+    auto format(optional<T> const& opt, Ctx& ctx) {
+        if (opt.has_value()) {
+            return format_to(ctx.out(), "optional<{}>::Some({})", type_name<T>(), *opt);
+        }
+        else {
+            return format_to(ctx.out(), "optional<{}>::None", type_name<T>());
+        }
+    }
 };
 
 
