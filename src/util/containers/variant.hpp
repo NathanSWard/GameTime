@@ -1,11 +1,12 @@
 #pragma once
 
 #include <boost/variant2/variant.hpp>
-#include <boost/preprocesor/repeat.hpp>
+#include <boost/preprocessor/repeat.hpp>
 #include <fmt/format.h>
 #include <util/common.hpp>
 
-using variant = boost::variant2::variant;
+template <typename... Ts>
+using variant = boost::variant2::variant<Ts...>;
 
 // https://www.reddit.com/r/cpp/comments/kst2pu/with_stdvariant_you_choose_either_performance_or/giilcxv?utm_source=share&utm_medium=web2x&context=3
 

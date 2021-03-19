@@ -15,7 +15,7 @@ target_link_libraries(${EXECUTABLE_NAME} PRIVATE fmt::fmt-header-only)
 
 # spdlog
 find_package(spdlog CONFIG REQUIRED)
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE spdlog::spdlog)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE spdlog::spdlog_header_only)
 
 # entt
 find_package(entt CONFIG REQUIRED)
@@ -47,5 +47,12 @@ find_package(OpenAL CONFIG REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE OpenAL::OpenAL)
 
 # concurrentqueue
-find_package(unofficial-concurrentqueue  CONFIG REQUIRED)
+find_package(unofficial-concurrentqueue CONFIG REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE unofficial::concurrentqueue::concurrentqueue)
+
+# boost
+find_package(Boost REQUIRED)
+
+# abseil
+find_package(absl CONFIG REQUIRED)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE absl::flat_hash_map absl::flat_hash_set)

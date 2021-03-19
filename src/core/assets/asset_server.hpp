@@ -6,11 +6,11 @@
 #include <string>
 #include <string_view>
 #include <tl/expected.hpp>
-#include <unordered_map>
 #include <vector>
 
 #include <debug/debug.hpp>
 #include <util/common.hpp>
+#include <util/containers/hash.hpp>
 #include <util/sync/rwlock.hpp>
 #include <core/ecs/resource.hpp>
 #include <core/task/task_pool.hpp>
@@ -55,7 +55,7 @@ namespace as_detail {
     struct AssetRefCounter
     {
         RefChangeChannel channel;
-        RwLock<std::unordered_map<HandleId, std::size_t>> ref_counts;
+        RwLock<HashMap<HandleId, std::size_t>> ref_counts;
     };
 
     struct AssetServerInternal
@@ -75,10 +75,10 @@ namespace as_detail {
         std::unique_ptr<AssetIo> asset_io;
         AssetRefCounter ref_counter;
         RwLock<std::vector<std::shared_ptr<AssetLoader>>> loaders;
-        RwLock<std::unordered_map<std::string, std::size_t, hash::string_hash, hash::string_equal>> extension_to_loader_index;
-        RwLock<std::unordered_map<AssetPathId, AssetInfo>> asset_info;
-        RwLock<std::unordered_map<type_id_t, std::vector<StoredAsset>>> stored_assets;
-        RwLock<std::unordered_map<type_id_t, std::vector<HandleId>>> assets_to_free;
+        RwLock<HashMap<std::string, std::size_t, hash::string_hash, hash::string_equal>> extension_to_loader_index;
+        RwLock<HashMap<AssetPathId, AssetInfo>> asset_info;
+        RwLock<HashMap<type_id_t, std::vector<StoredAsset>>> stored_assets;
+        RwLock<HashMap<type_id_t, std::vector<HandleId>>> assets_to_free;
     };
 }
 

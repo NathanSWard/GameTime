@@ -4,12 +4,12 @@
 #include <entt/core/type_info.hpp>
 #include <tl/optional.hpp>
 #include <type_traits>
-#include <unordered_map>
 
-#include "void_ptr.hpp"
+#include <util/containers/hash.hpp>
+#include <util/void_ptr.hpp>
 
 class TypeMap {
-    std::unordered_map<type_id_t, void_ptr> m_map;
+    HashMap<type_id_t, void_ptr> m_map;
 
 public:
 

@@ -54,9 +54,13 @@ namespace {
             }
         }();
 
+        auto const state = ElementState {
+            .state = e.state == SDL_PRESSED ? ElementState::Pressed : ElementState::Released
+        };
+
         button_events.send(MouseButtonInput{
                 .button = button,
-                .state = e.state == SDL_PRESSED ? ElementState::Pressed : ElementState::Released,
+                .state = state,
                 .clicks = e.clicks,
             });
     }

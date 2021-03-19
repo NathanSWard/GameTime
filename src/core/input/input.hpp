@@ -3,7 +3,7 @@
 #include <fmt/format.h>
 #include <ranges>
 #include <util/common.hpp>
-#include <unordered_set>
+#include <util/containers/hash.hpp>
 
 struct ElementState
 {
@@ -22,9 +22,9 @@ struct ElementState
 template <typename T>
 class Input
 {
-    std::unordered_set<T> m_pressed;
-    std::unordered_set<T> m_just_pressed;
-    std::unordered_set<T> m_just_released;
+    HashSet<T> m_pressed;
+    HashSet<T> m_just_pressed;
+    HashSet<T> m_just_released;
 
 public:
     Input() noexcept = default;

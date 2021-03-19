@@ -1,11 +1,11 @@
 #pragma once
 
 #include <tl/optional.hpp>
-#include <unordered_map>
 
 #include <core/assets/handle.hpp>
 #include <core/game/events.hpp>
 #include <util/common.hpp>
+#include <util/containers/hash.hpp>
 
 template <typename T>
 struct AssetEvent
@@ -36,7 +36,7 @@ template <typename T>
 class AssetsBase
 {
 protected:
-    std::unordered_map<HandleId, T> m_assets;
+    HashMap<HandleId, T> m_assets;
     std::vector<AssetEvent<T>> m_events;
     Sender<RefChange> m_sender;
 

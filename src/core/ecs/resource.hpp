@@ -3,10 +3,10 @@
 #include <functional>
 #include <memory>
 #include <numeric>
-#include <unordered_map>
 #include <tl/optional.hpp>
-#include "util/type_map.hpp"
-#include "util/common.hpp"
+#include <util/common.hpp>
+#include <util/containers/hash.hpp>
+#include <util/containers/type_map.hpp>
 
 struct SystemId 
 { 
@@ -122,7 +122,7 @@ constexpr auto make_const_local_resource(T const& value) -> Local<T const>
 
 class LocalResources
 {
-    std::unordered_map<SystemId, TypeMap> m_local_resources;
+    HashMap<SystemId, TypeMap> m_local_resources;
 
 public:
     template <typename T, typename... Args>
